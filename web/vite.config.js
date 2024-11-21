@@ -14,4 +14,10 @@ export default defineConfig({
         }),
         vue()
     ],
+    server: {
+        https: false,   // HTTPS 비활성화
+        host: true,     // 요청 수신 IP 설정
+        port: 3000,
+        hmr: {host: 'localhost', protocol: 'ws', port: 3000},   // HMR 엔더포인트 및 프로토콜 설정
+    },
 });

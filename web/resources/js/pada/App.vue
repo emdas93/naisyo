@@ -88,21 +88,53 @@ export default {
       }
     };
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
       if (message.value.trim() !== "") {
-        chatMessages.push({ text: message.value, isMine: true });
+        const newMessage = { text: message.value, isMine: true };
+
+        // 로컬에 메시지 추가
+        chatMessages.push(newMessage);
+
+        // 메시지 초기화
+        const messageToSend = message.value;
         message.value = "";
+
+        // POST 요청으로 메시지 전송
+        try {
+          const response = await fetch("http://127.0.0.1/api/chat/send-message", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json", // 요청 데이터 타입
+            },
+            body: JSON.stringify({
+              message: messageToSend,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("메시지 전송 실패: " + response.statusText);
+          }
+
+          const responseData = await response.json();
+          console.log("서버 응답:", responseData);
+        } catch (error) {
+          console.error("메시지 전송 중 에러 발생:", error);
+        }
+
+        // 스크롤 처리
         nextTick(() => {
           if (chatContainer.value) {
             chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
           }
         });
+
         // 상대방 메시지 추가 (예제용)
         setTimeout(() => {
           chatMessages.push({ text: "이 메시지는 상대방의 답장입니다.", isMine: false });
         }, 1000);
       }
     };
+
 
     const applyDateFilter = () => {
       if (!startDate.value || !endDate.value) {

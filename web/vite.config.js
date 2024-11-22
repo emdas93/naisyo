@@ -8,7 +8,8 @@ export default defineConfig({
             input: ['resources/css/app.css',
                     'resources/js/app.js',
                     'resources/css/pada/style.css',
-                    'resources/js/pada/main.js'
+                    'resources/js/pada/main.js',
+                    'resources/js/pada/assets/images/**'
                 ],
             refresh: true,
         }),

@@ -4,13 +4,17 @@
     <div class="lg:w-1/6 w-full bg-white shadow-md p-4 flex flex-col order-1">
       <h2 class="text-lg font-bold mb-4">Channels</h2>
       <ul class="space-y-2 flex-grow">
-        <li class="text-red-500">● STS제강</li>
+        <li v-for="(channel, index) in channels" :key="index" @click="selectChannel(index)"
+          class="cursor-pointer p-2 rounded-lg hover:bg-gray-100" :class="{ 'bg-blue-100': selectedChannel === index }">
+          {{ channel.title }}
+        </li>
+        <!-- <li class="text-red-500">● STS제강</li>
         <li class="text-yellow-500">● STS연주</li>
         <li class="text-green-500">● 제강</li>
         <li class="text-blue-500">● 연주</li>
         <li class="text-purple-500">● 열연</li>
         <li class="text-blue-500">● 냉연</li>
-        <li class="text-blue-500">● STS냉연</li>
+        <li class="text-blue-500">● STS냉연</li> -->
       </ul>
     </div>
 
@@ -28,9 +32,8 @@
           :class="{ 'justify-end': msg.isMine, 'justify-start': !msg.isMine }">
           <div :class="{
             'bg-blue-500 text-white': msg.isMine,
-            'bg-gray-200 text-black': !msg.isMine
-          }" class="px-4 py-2 rounded-lg max-w-xs text-wrap">
-            {{ msg.text }}
+            'text-black': !msg.isMine
+          }" class="px-4 py-2 rounded-lg max-w-3xl text-wrap markdown-body" v-html="msg.text">
           </div>
         </div>
       </div>
@@ -70,15 +73,40 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick } from "vue";
+import markdownIt from 'markdown-it';
+import markdownItAnchor from 'markdown-it-anchor';
+import markdownItTocDoneRight from 'markdown-it-toc-done-right';
+import markdownItHighlightJS from 'markdown-it-highlightjs';
+import hljs from "highlight.js";
+import matter from 'gray-matter';
+import uslug from "uslug";
 
 export default {
   setup() {
     // 데이터 정의
     const message = ref("");
+    const channels = reactive([]);
+    const selectedChannel = ref(0); // 현재 선택된 채널
     const chatMessages = reactive([]);
     const startDate = ref(""); // 시작 날짜
     const endDate = ref("");   // 종료 날짜
     const chatContainer = ref(null);
+    const toc = ref("");
+
+    // Markdown 객체 정의
+    const md = markdownIt({
+      html: true,
+    }).use(markdownItAnchor, { slugify: (s) => { return uslug(s) }, })
+      .use(markdownItTocDoneRight, {
+        containerClass: 'toc', // TOC 컨테이너 클래스 설정
+        slugify: (s) => { return uslug(s) },
+        callback: (html, ast) => {
+          toc.value = generateToc(ast);
+          toc.value = `<nav>${toc.value}</nav>`;
+        }
+      }).use(markdownItHighlightJS, {
+        hljs: hljs
+      });
 
     // 메서드 정의
     const handleKeydown = (event) => {
@@ -87,6 +115,68 @@ export default {
         sendMessage();
       }
     };
+
+    const selectChannel = (index) => {
+      selectedChannel.value = index; // 선택된 채널 변경
+    };
+
+    const addNewChannel = (title) => {
+      channels.push({ title, messages: [] });
+      selectedChannel.value = channels.length - 1; // 새로 추가된 채널로 이동
+    };
+
+    const generateToc = (node) => {
+      let html = "";
+      // 현재 노드의 이름이 있는 경우 li 요소로 감싸기
+      if (node.n) {
+        let padding = 'ps-3';
+        if (node.l === 1) {
+          padding = '';
+        }
+        html += `<li class="text-sm text-slate-300 ${padding}"><a href="#${uslug(node.n)}">${node.n}`;
+      }
+
+      // "c" 키가 배열이고, 배열에 요소가 있는 경우 ul로 감싸고 재귀 호출
+      if (Array.isArray(node.c) && node.c.length > 0) {
+        html += "<ul>";
+        node.c.forEach(childNode => {
+          html += generateToc(childNode); // 하위 노드를 재귀적으로 처리
+        });
+        html += "</ul>";
+      }
+
+      // 현재 노드가 li로 시작했다면 li를 닫기
+      if (node.n) {
+        html += "</a></li>";
+      }
+
+      return html;
+    }
+
+    const getChannels = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1/api/channel/get-channels", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const res = await response.json();
+
+        for (let i = 0; i < res.data.length; ++i) {
+          channels.push(res.data[i]);
+        }
+
+      } catch (error) {
+        console.log("채널 로드 중 에러 발생: " + error.message);
+      }
+    };
+
 
     const sendMessage = async () => {
       if (message.value.trim() !== "") {
@@ -101,7 +191,7 @@ export default {
 
         // POST 요청으로 메시지 전송
         try {
-          const response = await fetch("http://127.0.0.1/api/chat/send-message", {
+          const response = await fetch("http://127.0.0.1/api/message/send-message", {
             method: "POST",
             headers: {
               "Content-Type": "application/json", // 요청 데이터 타입
@@ -130,7 +220,32 @@ export default {
 
         // 상대방 메시지 추가 (예제용)
         setTimeout(() => {
-          chatMessages.push({ text: "이 메시지는 상대방의 답장입니다.", isMine: false });
+          let responseMessage = "아래는 요청하신 쿼리문입니다.";
+          responseMessage += `
+\`\`\`sql
+SELECT no, name, room, room_id, heat, no, testcol, opsco, posco
+FROM table_name AS Table
+LEFT JOIN join_table_name AS JOIN_TABLE
+ON TABLE.no = JOIN_TABLE.table_no
+WHERE TABLE.id=1
+\`\`\` `;
+
+          responseMessage += `
+query의 결과는 아래 표와 같습니다.
+
+|no|name|room|room_id|heat|no|testcol|opsco|posco|
+|---|---|---|---|---|---|---|---|---|
+|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+`;
+
+
+          responseMessage = md.render(responseMessage);
+          chatMessages.push({ text: responseMessage, isMine: false });
         }, 1000);
       }
     };
@@ -151,7 +266,13 @@ export default {
 
     // 초기화 및 라이프사이클 훅
     onMounted(() => {
+      getChannels();
       console.log("컴포넌트가 마운트되었습니다.");
+      channels.push({ id: 1, title: 'New Channel', message: '' });
+      channels.push({ id: 2, title: 'STS제강', message: '' });
+      channels.push({ id: 3, title: 'STS연주', message: '' });
+      channels.push({ id: 4, title: '도금부', message: '' });
+      channels.push({ id: 5, title: '냉연', message: '' });
     });
 
     return {
@@ -163,6 +284,10 @@ export default {
       handleKeydown,
       sendMessage,
       applyDateFilter,
+      channels,
+      selectChannel,
+      selectedChannel,
+      addNewChannel,
     };
   },
 };
@@ -171,6 +296,13 @@ export default {
 
 
 <style>
+@import '/node_modules/github-markdown-css/github-markdown-light.css';
+@import '/node_modules/highlight.js/styles/vs.css';
+
+.markdown-body {
+  min-height: auto !important;
+}
+
 /* 스크롤바 숨기기 */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

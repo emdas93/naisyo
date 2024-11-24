@@ -3,7 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\ChatMessageController;
+use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\MessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,4 +21,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/chat/send-message', [ChatMessageController::class, 'sendMessage']);
+// Get Channels
+Route::post('/channel/get-channels', [ChannelController::class, 'getChannels']);
+
+// Send Message
+Route::post('/message/send-message', [MessageController::class, 'sendMessage']);

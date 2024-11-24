@@ -223,6 +223,12 @@ export default {
           const responseDataFromFlask = await responseFromFlask.json();
           console.log("Flask 서버 응답:", responseDataFromFlask);
 
+          chatMessages.push({ text: md.render(responseDataFromLaravel.message), isMine: false });
+          chatMessages.push({ text: md.render(responseDataFromFlask.message), isMine: false });
+
+          // 스크롤 처리
+          scrollToBottom();
+
         } catch (error) {
           console.error("메시지 전송 중 에러 발생:", error);
         }
@@ -231,7 +237,7 @@ export default {
 
         // 상대방 메시지 추가 (예제용)
         setTimeout(() => {
-          let responseMessage = "아래는 요청하신 쿼리문입니다.";
+          let responseMessage = "아래는 요청하신 쿼리문입니다. (setTimeout)";
           responseMessage += `
 \`\`\`sql
 SELECT no, name, room, room_id, heat, no, testcol, opsco, posco

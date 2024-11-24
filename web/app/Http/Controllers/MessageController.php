@@ -22,10 +22,34 @@ class MessageController extends Controller
             'message' => $request->message,
         ]);
 
+        $message = <<<EOD
+아래는 요청하신 쿼리문 입니다. (Laravel)
+
+```sql
+SELECT no, name, room, room_id, heat, no, testcol, opsco, posco
+FROM table_name AS Table
+LEFT JOIN join_table_name AS JOIN_TABLE
+ON TABLE.no = JOIN_TABLE.table_no
+WHERE TABLE.id=1
+```
+
+query의 결과는 아래 표와 같습니다.
+
+|no|name|room|room_id|heat|no|testcol|opsco|posco|
+|---|---|---|---|---|---|---|---|---|
+|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+EOD;
+
         // 3. 응답 반환
         return response()->json([
             'status' => 'success',
-            'message' => 'Message sent successfully!',
+            // 'message' => 'Message sent successfully!',
+            'message' => $message,
             'data' => $message,
         ], 201); // HTTP 201 Created
     }

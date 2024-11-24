@@ -185,13 +185,16 @@ export default {
         // 로컬에 메시지 추가
         chatMessages.push(newMessage);
 
+        // 스크롤 처리
+        scrollToBottom();
+
         // 메시지 초기화
         const messageToSend = message.value;
         message.value = "";
 
         // POST 요청으로 메시지 전송
         try {
-          const response = await fetch("http://127.0.0.1/api/message/send-message", {
+          const responseFromLaravel = await fetch("http://127.0.0.1/api/message/send-message", {
             method: "POST",
             headers: {
               "Content-Type": "application/json", // 요청 데이터 타입
@@ -201,22 +204,30 @@ export default {
             }),
           });
 
-          if (!response.ok) {
+          const responseFromFlask = await fetch("http://127.0.0.1:5001/py/api/test", {
+            methos: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // body: JSON.stringify({
+            //   message: messageToSend,
+            // })
+          });
+
+          if (!responseFromLaravel.ok || !responseFromFlask.ok) {
             throw new Error("메시지 전송 실패: " + response.statusText);
           }
+          const responseDataFromLaravel = await responseFromLaravel.json();
+          console.log("Laravel 서버 응답:", responseDataFromLaravel);
 
-          const responseData = await response.json();
-          console.log("서버 응답:", responseData);
+          const responseDataFromFlask = await responseFromFlask.json();
+          console.log("Flask 서버 응답:", responseDataFromFlask);
+
         } catch (error) {
           console.error("메시지 전송 중 에러 발생:", error);
         }
 
-        // 스크롤 처리
-        nextTick(() => {
-          if (chatContainer.value) {
-            chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-          }
-        });
+
 
         // 상대방 메시지 추가 (예제용)
         setTimeout(() => {
@@ -246,10 +257,22 @@ query의 결과는 아래 표와 같습니다.
 
           responseMessage = md.render(responseMessage);
           chatMessages.push({ text: responseMessage, isMine: false });
+
+          // 스크롤 처리
+          scrollToBottom();
+
         }, 1000);
       }
     };
 
+    // 스크롤 아래로
+    const scrollToBottom = () => {
+      nextTick(() => {
+        // if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+        // }
+      });
+    }
 
     const applyDateFilter = () => {
       if (!startDate.value || !endDate.value) {

@@ -30,7 +30,7 @@ add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(
 sudo apt update
 
 # Docker 설치
-sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo apt install docker-ce docker-ce-cli containerd.io
 
 # Docker 설치 확인
 sudo docker --version
@@ -71,7 +71,9 @@ service mysql restart
 service php8.3-fpm stop
 service php8.3-fpm start
 
-cd web
+# 경로 : 프로젝트 클론 후 web/ 이동하여 실행
+cd web/
+
 # PHP Laravel 패키지 설치
 composer install
 php artisan key:generate
@@ -79,11 +81,51 @@ php artisan key:generate
 # Front단 빌드
 npm install
 
+# Database 접속 (비밀번호 그냥 엔터)
+mysql -uroot -p
+
+# 유저 생성 SQL
+###########################################################
+create user 'wxhack'@'localhost' identified by 'qweQWE12!';
+create user 'wxhack'@'127.0.0.1' identified by 'qweQWE12!';
+create user 'wxhack'@'%' identified by 'qweQWE12!';
+CREATE DATABASE wxhack CHARACTER SET utf8mb4;
+grant all privileges on wxhack.* to 'wxhack'@'localhost';
+grant all privileges on wxhack.* to 'wxhack'@'%';
+flush privileges;
+###########################################################
+
+# Database Migrate
+php artisan migrate
+
 # 빌드 및 HMR서버 실행
 npm run dev
 ```
 
-- MySQL 테스트용 유저 및 데이터베이스 만들기
+## Wxhack Python Flask 초기 환경 설정 방법
+``` bash
+
+# 경로 프로젝트 클론 후 api/ 이동하여 실행
+cd api/
+
+# 가상 환경 생성
+python3 -m venv venv
+
+# 가상 환경 실행 (실행시키면 명령줄 가장 왼쪽에 venv가 표시됨.)
+source venv/bin/activate
+
+# 가상 환경 종료 할 때 명령어 (참고)
+deactivate
+
+# 필요한 패키지 설치
+pip install -r requirements.txt
+
+# Flask 서버 실행
+python main.py
+
+```
+
+## MySQL 테스트용 유저 및 데이터베이스 만들기
 
 ``` sql
 create user 'wxhack'@'localhost' identified by 'qweQWE12!';

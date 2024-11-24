@@ -12,7 +12,44 @@ wsl
 
 ```
 
+## 윈도우 - Linux 포트포워딩 설정 스크립트
+
+``` powershell
+$remoteport = bash.exe -c "ifconfig eth0 | grep 'inet '"
+$found = $remoteport -match '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
+
+if( $found ){
+$remoteport = $matches[0];
+} else{
+echo "The Script Exited, the ip address of WSL 2 cannot be found";
+exit;
+}
+
+#[Ports]
+#All the ports you want to forward separated by coma
+$ports=@(22,80,3306,10000,3000,5001,8080,443);
+
+#[Static ip]
+#You can change the addr to your ip config to listen to a specific address
+$addr='0.0.0.0';
+$ports_a = $ports -join ",";
+
+#Remove Firewall Exception Rules
+iex "Remove-NetFireWallRule -DisplayName 'WSL 2 Firewall Unlock' ";
+
+#adding Exception Rules for inbound and outbound Rules
+iex "New-NetFireWallRule -DisplayName 'WSL 2 Firewall Unlock' -Direction Outbound -LocalPort $ports_a -Action Allow -Protocol TCP";
+iex "New-NetFireWallRule -DisplayName 'WSL 2 Firewall Unlock' -Direction Inbound -LocalPort $ports_a -Action Allow -Protocol TCP";
+
+for( $i = 0; $i -lt $ports.length; $i++ ){
+$port = $ports[$i];
+iex "netsh interface portproxy delete v4tov4 listenport=$port listenaddress=$addr";
+iex "netsh interface portproxy add v4tov4 listenport=$port listenaddress=$addr connectport=$port connectaddress=$remoteport";
+}
+```
+
 ## Docker 개발환경 구축 - 윈도우 하위 시스템에 설치된 Linux 에 Docker 설치 (WSL 명령어로 하위시스템 접근 후)
+
 ``` bash
 # 패키지 업데이트
 sudo apt update
@@ -46,7 +83,7 @@ newgrp docker
 docker pull emdas93/wxhack:0.0
 
 # wxhack 컨테이너 실행
-docker run --privileged -d -it --name wxhack -p 80:80 -p 443:443 -p 3306:3306 -p 3000:3000 -p 5000:5000 -p 27017:27017 -p 27018:27018 -p 27019:27019 -p 28017:28017 -v $(pwd):/workspace emdas93/wxhack:0.1 bash
+docker run --privileged -d -it --name wxhack -p 80:80 -p 443:443 -p 3306:3306 -p 3000:3000 -p 5001:5001 -p 27017:27017 -p 27018:27018 -p 27019:27019 -p 28017:28017 -v $(pwd):/workspace emdas93/wxhack:0.1 bash
 
 # wxhack 터미널 확인
 docker exec -it wxhack bash
@@ -105,7 +142,7 @@ npm run dev
 ## Wxhack Python Flask 초기 환경 설정 방법
 ``` bash
 
-# 경로 프로젝트 클론 후 api/ 이동하여 실행
+# 프로젝트 클론 후 api/ 이동하여 실행
 cd api/
 
 # 가상 환경 생성
@@ -137,9 +174,7 @@ grant all privileges on wxhack.* to 'wxhack'@'%';
 flush privileges;
 ```
 
-
-## dockerfile
-- wxhack 개발을 위한 dockerfile
+## wxhack 개발을 위한 dockerfile
 
 ``` dockerfile
 # Base Image

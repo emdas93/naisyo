@@ -46,7 +46,7 @@ newgrp docker
 docker pull emdas93/wxhack:0.0
 
 # wxhack 컨테이너 실행
-docker run --privileged -d -it --name wxhack -p 80:80 -p 443:443 -p 3306:3306 -p 3000:3000 -p 5000:5000 -p 27017:27017 -p 27018:27018 -p 27019:27019 -p 28017:28017 -v $(pwd):/workspace emdas93/wxhack:0.0 bash
+docker run --privileged -d -it --name wxhack -p 80:80 -p 443:443 -p 3306:3306 -p 3000:3000 -p 5000:5000 -p 27017:27017 -p 27018:27018 -p 27019:27019 -p 28017:28017 -v $(pwd):/workspace emdas93/wxhack:0.1 bash
 
 # wxhack 터미널 확인
 docker exec -it wxhack bash

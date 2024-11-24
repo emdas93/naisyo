@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chat_rooms', function (Blueprint $table) {
+        Schema::create('channels', function (Blueprint $table) {
             $table->id(); // Primary Key, Auto Increment
             $table->string('title'); // 방 이름
             $table->unsignedBigInteger('user_id')->nullable(); // 방 주인 (NULL 허용)
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_rooms');
+        Schema::dropIfExists('channels');
     }
 };

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ChatMessage;
+use App\Models\Message;
 
-class ChatMessageController extends Controller
+class MessageController extends Controller
 {
     public function sendMessage(Request $request) {
         // 1. 입력값 검증
@@ -16,7 +16,7 @@ class ChatMessageController extends Controller
         // ]);
 
         // 2. 데이터 저장
-        $chatMessage = ChatMessage::create([
+        $message = Message::create([
             // 'user_id' => $validatedData['user_id'],
             // 'room_id' => $validatedData['room_id'],
             'message' => $request->message,
@@ -26,7 +26,7 @@ class ChatMessageController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Message sent successfully!',
-            'data' => $chatMessage,
+            'data' => $message,
         ], 201); // HTTP 201 Created
     }
 }

@@ -10,6 +10,10 @@ wsl --install
 # 초기 아이디 및 패스워드 설정 필요 (자동으로 실행)
 wsl
 
+# 실행 후 net-tools 설치
+sudo apt install net-tool
+# sudo 비밀번호 입력 : *******
+
 ```
 
 ## 윈도우 - Linux 포트포워딩 설정 스크립트

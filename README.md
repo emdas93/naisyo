@@ -16,7 +16,7 @@ sudo apt install net-tool
 
 ```
 
-## 윈도우 - Linux 포트포워딩 설정 스크립트
+## 윈도우 - Linux 포트포워딩 설정 스크립트 (설정)
 
 ``` powershell
 $remoteport = bash.exe -c "ifconfig eth0 | grep 'inet '"
@@ -50,6 +50,32 @@ $port = $ports[$i];
 iex "netsh interface portproxy delete v4tov4 listenport=$port listenaddress=$addr";
 iex "netsh interface portproxy add v4tov4 listenport=$port listenaddress=$addr connectport=$port connectaddress=$remoteport";
 }
+```
+
+## 윈도우 - Linux 포트포워딩 설정 스크립트 (해제)
+
+``` powershell
+#[Ports]
+# 스크립트에서 사용된 포트 리스트
+$ports=@(22,80,3306,10000,3000,5001,8080,443);
+
+#[Static ip]
+$addr='0.0.0.0';
+$ports_a = $ports -join ",";
+
+# 1. 방화벽 규칙 제거
+Write-Host "Removing Firewall rules..."
+iex "Remove-NetFireWallRule -DisplayName 'WSL 2 Firewall Unlock'";
+
+# 2. 포트 프록시 제거
+Write-Host "Removing port proxy rules..."
+for( $i = 0; $i -lt $ports.length; $i++ ){
+    $port = $ports[$i];
+    iex "netsh interface portproxy delete v4tov4 listenport=$port listenaddress=$addr";
+}
+
+Write-Host "Firewall and port proxy rules have been reverted."
+
 ```
 
 ## Docker 개발환경 구축 - 윈도우 하위 시스템에 설치된 Linux 에 Docker 설치 (WSL 명령어로 하위시스템 접근 후)

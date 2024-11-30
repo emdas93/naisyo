@@ -22,7 +22,7 @@
     <div
       class="lg:w-4/6 w-full bg-white shadow-md flex flex-col items-center justify-end relative bg-center bg-no-repeat bg-opacity-20 p-4 order-3 lg:order-2">
       <div class="absolute inset-0 flex items-center justify-center -z-10">
-        <img src="./assets/images/posco.png" alt="POSCO" class="opacity-20">
+        <img src="../../assets/images/posco.png" alt="POSCO" class="opacity-20">
       </div>
       <!-- 채팅 메시지 영역 -->
       <div ref="chatContainer"
@@ -82,6 +82,7 @@ import matter from 'gray-matter';
 import uslug from "uslug";
 
 export default {
+name: "IndexPage",
   setup() {
     // 데이터 정의
     const message = ref("");
@@ -155,7 +156,7 @@ export default {
 
     const getChannels = async () => {
       try {
-        const response = await fetch("http://127.0.0.1/api/channel/get-channels", {
+        const response = await fetch("http://localhost/api/channel/get-channels", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -194,7 +195,7 @@ export default {
 
         // POST 요청으로 메시지 전송
         try {
-          const responseFromLaravel = await fetch("http://127.0.0.1/api/message/send-message", {
+          const responseFromLaravel = await fetch("http://localhost/api/message/send-message", {
             method: "POST",
             headers: {
               "Content-Type": "application/json", // 요청 데이터 타입
@@ -204,7 +205,7 @@ export default {
             }),
           });
 
-          const responseFromFlask = await fetch("http://127.0.0.1:5001/py/api/test", {
+          const responseFromFlask = await fetch("http://localhost:5001/py/api/test", {
             methos: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -264,7 +265,7 @@ export default {
 
           responseMessage += `
   query의 결과는 아래 표와 같습니다.
-  
+
   |no|name|room|room_id|heat|no|testcol|opsco|posco|
   |---|---|---|---|---|---|---|---|---|
   |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|

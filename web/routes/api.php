@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\Auth\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,10 @@ Route::post('/login', function (Request $request) {
 
     return response()->json(['message' => 'Invalid credentials'], 401);
 });
+
+
+Route::post('/register', [RegisterController::class, 'register']);
+
 
 Route::post('/logout', function () {
     auth()->logout();

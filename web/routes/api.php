@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\MessageController;
@@ -58,9 +59,11 @@ Route::post('/login', function (Request $request) {
 
 Route::post('/register', [RegisterController::class, 'register']);
 
+Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
+    Auth::guard('web')->logout(); // 세션 로그아웃
+    request()->session()->invalidate(); // 세션 무효화
+    request()->session()->regenerateToken(); // CSRF 토큰 재생성
 
-Route::post('/logout', function () {
-    auth()->logout();
     return response()->json(['message' => 'Logged out successfully']);
 });
 

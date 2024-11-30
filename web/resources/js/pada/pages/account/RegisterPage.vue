@@ -5,7 +5,7 @@
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full px-3 mb-6">
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="name">
-            Full Name
+            이름
           </label>
           <input
             v-model="name"
@@ -20,7 +20,7 @@
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full px-3">
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="email">
-            Email
+            이메일
           </label>
           <input
             v-model="email"
@@ -35,7 +35,7 @@
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full px-3">
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="password">
-            Password
+            비밀번호
           </label>
           <input
             v-model="password"
@@ -52,12 +52,12 @@
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           type="submit"
         >
-          Register
+          가입
         </button>
       </div>
     </form>
     <p class="text-center text-gray-500 text-xs mt-5">
-      &copy;2024 Pada Team. All rights reserved.
+      &copy; 2024 Pada Team. All rights reserved.
     </p>
   </div>
 </template>

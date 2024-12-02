@@ -12,9 +12,9 @@
       </ul>
       <h2 class="text-lg font-bold mb-4">Rooms</h2>
       <ul class="space-y-2 mb-5">
-        <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(index)"
+        <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(room.id)"
           class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-100"
-          :class="{ 'bg-blue-100': selectedRoom === index }">
+          :class="{ 'bg-blue-100': selectedRoom === room.id }">
           {{ room.title }}
         </li>
       </ul>
@@ -137,6 +137,7 @@ export default {
     };
 
     const selectRoom = (index) => {
+      console.log(index);
       selectedRoom.value = index; // 선택된 채널 변경
     };
 
@@ -153,6 +154,16 @@ export default {
 
 
     const sendMessage = async () => {
+
+      // 새로운 채팅일 경우 처리
+      if(selectedRoom.value == 0) {
+        console.log("Create New Room");
+
+        rooms.splice(1, 0, {id:roomNumber, title: roomTitle})
+        selectedRoom.value = roomNumber
+      }
+
+
       if (message.value.trim() !== "") {
         const newMessage = { text: message.value, isMine: true };
 
@@ -227,8 +238,11 @@ export default {
       console.log("컴포넌트가 마운트되었습니다.");
       channels.push({ id: 1, title: '광양제철소', message: '' });
       channels.push({ id: 2, title: '포항제철소', message: '' });
+      rooms.push({ id: 0, title: '새로운 메시지', message: '' });
       rooms.push({ id: 1, title: '도금부 실적 조회', message: '' });
       rooms.push({ id: 2, title: 'STS제강 전기로 실적', message: '' });
+      rooms.push({ id: 4, title: 'TEST', message: '' });
+      rooms.splice(1, 0, {id:5, title: "TTESAF"})
     });
 
     return {

@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('channels', function (Blueprint $table) {
-            $table->id(); // Primary Key, Auto Increment
-            $table->string('title'); // 방 이름
-            $table->unsignedBigInteger('user_id')->nullable(); // 방 주인 (NULL 허용)
-            $table->timestamps(); // created_at, updated_at
+        Schema::create('chat_rooms', function (Blueprint $table) {
+            $table->id();                                       // Primary Key, Auto Increment
+            $table->unsignedBigInteger('user_id')->nullable();  // 방 주인 (NULL 허용)
+            $table->string('title');                            // 방 이름
+            $table->timestamps();                               // created_at, updated_at
 
             // Foreign Key 설정
             // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('channels');
+        Schema::dropIfExists('chat_rooms');
     }
 };

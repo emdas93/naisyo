@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Chat;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Message;
+use App\Models\ChatMessage;
 
 class MessageController extends Controller
 {
@@ -16,7 +17,7 @@ class MessageController extends Controller
         // ]);
 
         // 2. 데이터 저장
-        $message = Message::create([
+        $message = ChatMessage::create([
             // 'user_id' => $validatedData['user_id'],
             // 'room_id' => $validatedData['room_id'],
             'message' => $request->message,

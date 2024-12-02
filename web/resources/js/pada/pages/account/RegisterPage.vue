@@ -31,6 +31,19 @@
           />
           <p v-if="errors.email" class="text-red-500 text-xs italic">{{ errors.email }}</p>
         </div>
+        <div class="w-full px-3">
+          <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="email">
+            직번
+          </label>
+          <input
+            v-model="emp_no"
+            class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+            id="emp_no"
+            type="text"
+            placeholder="123456"
+          />
+          <p v-if="errors.emp_no" class="text-red-500 text-xs italic">{{ errors.emp_no }}</p>
+        </div>
       </div>
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full px-3">
@@ -70,6 +83,7 @@ export default {
     return {
       name: "",
       email: "",
+      emp_no: "",
       password: "",
       errors: {},
     };
@@ -81,6 +95,7 @@ export default {
         const response = await axios.post("http://localhost/api/register", {
           name: this.name,
           email: this.email,
+          emp_no: this.emp_no,
           password: this.password,
         });
 

@@ -3,17 +3,26 @@
     <!-- 왼쪽 채널 리스트 -->
     <div class="lg:w-1/6 w-full bg-white shadow-md p-4 flex flex-col order-1">
       <h2 class="text-lg font-bold mb-4">Channels</h2>
-      <ul class="space-y-2 flex-grow">
+      <ul class="space-y-2 mb-5">
         <li v-for="(channel, index) in channels" :key="index" @click="selectChannel(index)"
-          class="cursor-pointer p-2 rounded-lg hover:bg-gray-100" :class="{ 'bg-blue-100': selectedChannel === index }">
+          class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-100"
+          :class="{ 'bg-blue-100': selectedChannel === index }">
           {{ channel.title }}
+        </li>
+      </ul>
+      <h2 class="text-lg font-bold mb-4">Rooms</h2>
+      <ul class="space-y-2 mb-5">
+        <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(index)"
+          class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-100"
+          :class="{ 'bg-blue-100': selectedRoom === index }">
+          {{ room.title }}
         </li>
       </ul>
     </div>
 
     <!-- 중앙 컨텐츠 -->
     <div
-      class="lg:w-4/6 w-full bg-white shadow-md flex flex-col items-center justify-end relative bg-center bg-no-repeat bg-opacity-20 p-4 order-3 lg:order-2">
+      class="lg:w-5/6 w-full bg-white shadow-md flex flex-col items-center justify-end relative bg-center bg-no-repeat bg-opacity-20 p-4 order-3 lg:order-2">
       <div class="absolute inset-0 flex items-center justify-center -z-10">
         <img src="../assets/images/posco.png" alt="POSCO" class="opacity-20">
       </div>
@@ -41,26 +50,6 @@
       </div>
     </div>
 
-    <!-- 오른쪽 컨텐츠 -->
-    <div class="lg:w-1/6 w-full bg-white shadow-md p-4 flex flex-col space-y-8 order-2 lg:order-3">
-      <div>
-        <h2 class="text-lg font-bold mb-4">검색기간 변경</h2>
-        <form class="space-y-2">
-          <label class="block mb-2">
-            시작 날짜:
-            <input type="date" v-model="startDate" class="border rounded-lg p-2 w-full" />
-          </label>
-          <label class="block mb-2">
-            종료 날짜:
-            <input type="date" v-model="endDate" class="border rounded-lg p-2 w-full" />
-          </label>
-          <button type="button" @click="applyDateFilter"
-            class="bg-blue-500 text-white font-semibold rounded-lg shadow-md px-4 py-2 w-full hover:bg-blue-600 transition duration-200">
-            적용
-          </button>
-        </form>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -82,12 +71,15 @@ export default {
     // 데이터 정의
     const message = ref("");
     const channels = reactive([]);
+    const rooms = reactive([]);
     const selectedChannel = ref(0); // 현재 선택된 채널
+    const selectedRoom = ref(0); // 현재 선택된 채널
     const chatMessages = reactive([]);
     const startDate = ref(""); // 시작 날짜
     const endDate = ref("");   // 종료 날짜
     const chatContainer = ref(null);
     const toc = ref("");
+    const authStore = useAuthStore();
 
     // Markdown 객체 정의
     const md = markdownIt({
@@ -103,23 +95,6 @@ export default {
       }).use(markdownItHighlightJS, {
         hljs: hljs
       });
-
-    // 메서드 정의
-    const handleKeydown = (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
-    };
-
-    const selectChannel = (index) => {
-      selectedChannel.value = index; // 선택된 채널 변경
-    };
-
-    const addNewChannel = (title) => {
-      channels.push({ title, messages: [] });
-      selectedChannel.value = channels.length - 1; // 새로 추가된 채널로 이동
-    };
 
     const generateToc = (node) => {
       let html = "";
@@ -149,29 +124,33 @@ export default {
       return html;
     }
 
-    const getChannels = async () => {
-      try {
-        const response = await fetch("/api/channel/get-channels", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const res = await response.json();
-
-        for (let i = 0; i < res.data.length; ++i) {
-          channels.push(res.data[i]);
-        }
-
-      } catch (error) {
-        console.log("채널 로드 중 에러 발생: " + error.message);
+    // 메서드 정의
+    const handleKeydown = (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
       }
     };
+
+    const selectChannel = (index) => {
+      selectedChannel.value = index; // 선택된 채널 변경
+    };
+
+    const selectRoom = (index) => {
+      selectedRoom.value = index; // 선택된 채널 변경
+    };
+
+    const addNewChannel = (title) => {
+      channels.push({ title, messages: [] });
+      selectedChannel.value = channels.length - 1; // 새로 추가된 채널로 이동
+    };
+
+    const addNewRoom = (title) => {
+      rooms.push({ title, messages: [] });
+      selectedChannel.value = rooms.length - 1; // 새로 추가된 채널로 이동
+    };
+
+
 
     const sendMessage = async () => {
       if (message.value.trim() !== "") {
@@ -193,6 +172,8 @@ export default {
             "http://localhost/api/message/send-message",
             {
               message: messageToSend,
+              user_id: authStore.user.id,
+
             },
             {
               headers: { "Content-Type": "application/json" },
@@ -202,71 +183,32 @@ export default {
           const responseDataFromLaravel = responseFromLaravel.data;
           console.log("Laravel 서버 응답:", responseDataFromLaravel);
 
+          /******************************* FLASK ********************************/
+          // const responseFromFlask = await axios.post(
+          //   "http://localhost:5001/py/api/send-message",
+          //   { message: messageToSend },
+          //   {
+          //     headers: {
+          //       "Content-Type": "application/json",
+          //     },
+          //     withCredentials: true,
+          //   }
+          // );
+
+          // const responseDataFromFlask = responseFromFlask.data;
+          // console.log("Flask 서버 응답:", responseDataFromFlask);
+
           // chatMessages.push({
-          //   text: md.render(responseDataFromLaravel.message),
+          //   text: md.render(responseDataFromFlask.message),
           //   isMine: false,
           // });
-
-          // Flask 서버로 메시지 전송
-          // await fetch("http://localhost:5001/py/api/test", {
-          //   method: 'GET'
-          // })
-          const responseFromFlask = await axios.post(
-            "http://localhost:5001/py/api/send-message",
-            { message: messageToSend },
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-              withCredentials: true,
-            }
-          );
-
-          const responseDataFromFlask = responseFromFlask.data;
-          console.log("Flask 서버 응답:", responseDataFromFlask);
-
-          chatMessages.push({
-            text: md.render(responseDataFromFlask.message),
-            isMine: false,
-          });
+          /******************************* FLASK ********************************/
 
           // 스크롤 처리
           scrollToBottom();
         } catch (error) {
           console.error("메시지 전송 중 에러 발생:", error);
         }
-
-        // 상대방 메시지 추가 (예제용)
-//         setTimeout(() => {
-//           let responseMessage = "아래는 요청하신 쿼리문입니다. (setTimeout)";
-//           responseMessage += `
-// \`\`\`sql
-// SELECT no, name, room, room_id, heat, no, testcol, opsco, posco
-// FROM table_name AS Table
-// LEFT JOIN join_table_name AS JOIN_TABLE
-// ON TABLE.no = JOIN_TABLE.table_no
-// WHERE TABLE.id=1
-// \`\`\` `;
-
-//           responseMessage += `
-// query의 결과는 아래 표와 같습니다.
-
-// |no|name|room|room_id|heat|no|testcol|opsco|posco|
-// |---|---|---|---|---|---|---|---|---|
-// |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
-// |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
-// |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
-// |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
-// |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
-// |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
-// `;
-
-//           responseMessage = md.render(responseMessage);
-//           chatMessages.push({ text: responseMessage, isMine: false });
-
-//           // 스크롤 처리
-//           scrollToBottom();
-//         }, 1000);
       }
     };
 
@@ -280,26 +222,13 @@ export default {
       });
     }
 
-    const applyDateFilter = () => {
-      if (!startDate.value || !endDate.value) {
-        alert("시작 날짜와 종료 날짜를 모두 선택해주세요!");
-        return;
-      }
-      if (new Date(startDate.value) > new Date(endDate.value)) {
-        alert("시작 날짜는 종료 날짜보다 앞서야 합니다.");
-        return;
-      }
-      alert(`선택된 기간: ${startDate.value} ~ ${endDate.value}`);
-      // 추가적인 필터링 로직 작성
-    };
-
     // 초기화 및 라이프사이클 훅
     onMounted(() => {
-      // getChannels();
       console.log("컴포넌트가 마운트되었습니다.");
-      channels.push({ id: 1, title: 'New Channel', message: '' });
-      channels.push({ id: 2, title: '광양제철소', message: '' });
-      channels.push({ id: 3, title: '포항제철소', message: '' });
+      channels.push({ id: 1, title: '광양제철소', message: '' });
+      channels.push({ id: 2, title: '포항제철소', message: '' });
+      rooms.push({ id: 1, title: '도금부 실적 조회', message: '' });
+      rooms.push({ id: 2, title: 'STS제강 전기로 실적', message: '' });
     });
 
     return {
@@ -310,11 +239,14 @@ export default {
       chatContainer,
       handleKeydown,
       sendMessage,
-      applyDateFilter,
       channels,
+      rooms,
       selectChannel,
       selectedChannel,
+      selectedRoom,
       addNewChannel,
+      selectRoom,
+      addNewRoom,
     };
   },
 };

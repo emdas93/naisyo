@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Message extends Model
+class ChatMessage extends Model
 {
     use HasFactory;
 
-    protected $table = 'messages'; // 테이블 이름 설정
+    protected $table = 'chat_messages'; // 테이블 이름 설정
 
     // 대량 할당 가능한 필드 정의
     protected $fillable = [

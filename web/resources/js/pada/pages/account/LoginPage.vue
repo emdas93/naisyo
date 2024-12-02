@@ -16,7 +16,7 @@
             비밀번호
           </label>
           <input v-model="password"
-            class="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            class="shadow appearance-none border  rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
             id="password" type="password" placeholder="******************" />
           <p v-if="errorMessage" class="text-red-500 text-xs italic">{{ errorMessage }}</p>
         </div>

@@ -73,6 +73,7 @@ import markdownItHighlightJS from 'markdown-it-highlightjs';
 import hljs from "highlight.js";
 import matter from 'gray-matter';
 import uslug from "uslug";
+import axios from "axios";
 import { useAuthStore } from "../store/auth";
 
 export default {
@@ -172,7 +173,6 @@ export default {
       }
     };
 
-
     const sendMessage = async () => {
       if (message.value.trim() !== "") {
         const newMessage = { text: message.value, isMine: true };
@@ -187,99 +187,89 @@ export default {
         const messageToSend = message.value;
         message.value = "";
 
-        // POST 요청으로 메시지 전송
         try {
-          const responseFromLaravel = await fetch("http://localhost/api/message/send-message", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json", // 요청 데이터 타입
-            },
-            body: JSON.stringify({
+          // Laravel 서버로 메시지 전송
+          const responseFromLaravel = await axios.post(
+            "http://localhost/api/message/send-message",
+            {
               message: messageToSend,
-            }),
-          });
-
-          const responseFromFlask = await fetch("http://localhost:5001/py/api/test", {
-            methos: "GET",
-            headers: {
-              "Content-Type": "application/json",
             },
-            // body: JSON.stringify({
-            //   message: messageToSend,
-            // })
+            {
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          const responseDataFromLaravel = responseFromLaravel.data;
+          console.log("Laravel 서버 응답:", responseDataFromLaravel);
+
+          // chatMessages.push({
+          //   text: md.render(responseDataFromLaravel.message),
+          //   isMine: false,
+          // });
+
+          // Flask 서버로 메시지 전송
+          // await fetch("http://localhost:5001/py/api/test", {
+          //   method: 'GET'
+          // })
+          const responseFromFlask = await axios.post(
+            "http://localhost:5001/py/api/send-message",
+            { message: messageToSend },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              withCredentials: true,
+            }
+          );
+
+          const responseDataFromFlask = responseFromFlask.data;
+          console.log("Flask 서버 응답:", responseDataFromFlask);
+
+          chatMessages.push({
+            text: md.render(responseDataFromFlask.message),
+            isMine: false,
           });
-
-          // Laravel 서버 응답 처리
-          if (!responseFromLaravel.ok) {
-            throw new Error("Laravel 메시지 전송 실패: " + responseFromLaravel.statusText);
-          } else {
-            const responseDataFromLaravel = await responseFromLaravel.json();
-            console.log("Laravel 서버 응답:", responseDataFromLaravel);
-
-            chatMessages.push({
-              text: md.render(responseDataFromLaravel.message),
-              isMine: false,
-            });
-          }
-
-          // Flask 서버 응답 처리
-          if (!responseFromFlask.ok) {
-            throw new Error("Flask 메시지 전송 실패: " + responseFromFlask.statusText);
-          } else {
-            const responseDataFromFlask = await responseFromFlask.json();
-            console.log("Flask 서버 응답:", responseDataFromFlask);
-
-            chatMessages.push({
-              text: md.render(responseDataFromFlask.message),
-              isMine: false,
-            });
-          }
 
           // 스크롤 처리
           scrollToBottom();
-
-
         } catch (error) {
           console.error("메시지 전송 중 에러 발생:", error);
         }
 
-
-
         // 상대방 메시지 추가 (예제용)
-        setTimeout(() => {
-          let responseMessage = "아래는 요청하신 쿼리문입니다. (setTimeout)";
-          responseMessage += `
-  \`\`\`sql
-  SELECT no, name, room, room_id, heat, no, testcol, opsco, posco
-  FROM table_name AS Table
-  LEFT JOIN join_table_name AS JOIN_TABLE
-  ON TABLE.no = JOIN_TABLE.table_no
-  WHERE TABLE.id=1
-  \`\`\` `;
+//         setTimeout(() => {
+//           let responseMessage = "아래는 요청하신 쿼리문입니다. (setTimeout)";
+//           responseMessage += `
+// \`\`\`sql
+// SELECT no, name, room, room_id, heat, no, testcol, opsco, posco
+// FROM table_name AS Table
+// LEFT JOIN join_table_name AS JOIN_TABLE
+// ON TABLE.no = JOIN_TABLE.table_no
+// WHERE TABLE.id=1
+// \`\`\` `;
 
-          responseMessage += `
-  query의 결과는 아래 표와 같습니다.
+//           responseMessage += `
+// query의 결과는 아래 표와 같습니다.
 
-  |no|name|room|room_id|heat|no|testcol|opsco|posco|
-  |---|---|---|---|---|---|---|---|---|
-  |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
-  |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
-  |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
-  |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
-  |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
-  |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
-  `;
+// |no|name|room|room_id|heat|no|testcol|opsco|posco|
+// |---|---|---|---|---|---|---|---|---|
+// |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+// |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+// |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+// |데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|데이터1|데이터2|데이터3|
+// |데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|데이터4|데이터5|데이터6|
+// |데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|데이터7|데이터8|데이터9|
+// `;
 
+//           responseMessage = md.render(responseMessage);
+//           chatMessages.push({ text: responseMessage, isMine: false });
 
-          responseMessage = md.render(responseMessage);
-          chatMessages.push({ text: responseMessage, isMine: false });
-
-          // 스크롤 처리
-          scrollToBottom();
-
-        }, 1000);
+//           // 스크롤 처리
+//           scrollToBottom();
+//         }, 1000);
       }
     };
+
 
     // 스크롤 아래로
     const scrollToBottom = () => {

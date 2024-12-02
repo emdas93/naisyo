@@ -19,25 +19,25 @@ use App\Http\Controllers\Auth\RegisterController;
 |
 */
 
-Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
+// Route::post('/login', function (Request $request) {
+//     $credentials = $request->validate([
+//         'email' => 'required|email',
+//         'password' => 'required',
+//     ]);
 
-    $user = User::where('email', $credentials['email'])->first();
+//     $user = User::where('email', $credentials['email'])->first();
 
-    if (!$user || !Hash::check($credentials['password'], $user->password)) {
-        return response()->json(['message' => 'Invalid credentials'], 401);
-    }
+//     if (!$user || !Hash::check($credentials['password'], $user->password)) {
+//         return response()->json(['message' => 'Invalid credentials'], 401);
+//     }
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+//     $token = $user->createToken('auth_token')->plainTextToken;
 
-    return response()->json([
-        'access_token' => $token,
-        'token_type' => 'Bearer',
-    ]);
-});
+//     return response()->json([
+//         'access_token' => $token,
+//         'token_type' => 'Bearer',
+//     ]);
+// });
 
 Route::get('/csrf-token', function () {
     return response()->json(['csrfToken' => csrf_token()]);

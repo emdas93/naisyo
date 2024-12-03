@@ -22,7 +22,8 @@ Route::get('/user', [LoginController::class, 'user'])->middleware('auth:sanctum'
 Route::post('/register', [RegisterController::class, 'register']);
 
 // Message
-Route::post('/message/send-message', [MessageController::class, 'sendMessage']);
+Route::post('/chat/send-message', [MessageController::class, 'sendMessage']);
+Route::post('/chat/get-messages', [MessageController::class, 'getMessages']);
 
 // Room
 Route::post('/chat/get-rooms', [RoomController::class, 'getRooms']);

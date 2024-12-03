@@ -31,11 +31,11 @@
         class="flex-grow w-full md:w-full rounded-lg p-4 overflow-y-scroll space-y-2 h-64 scrollbar-hide"
         @scroll="handleScroll">
         <div v-for="(msg, index) in chatMessages" :key="index" class="flex"
-          :class="{ 'justify-end': msg.isMine, 'justify-start': !msg.isMine }">
+          :class="{ 'justify-end': msg.user_id > 0, 'justify-start': msg.user_id == 0 }">
           <div :class="{
-            'bg-blue-500 text-white': msg.isMine,
-            'text-black': !msg.isMine
-          }" class="px-4 py-2 rounded-lg max-w-3xl text-wrap markdown-body" v-html="msg.text">
+            'bg-blue-500 text-white': msg.user_id > 0,
+            'text-black': msg.user_id == 0
+          }" class="px-4 py-2 rounded-lg max-w-3xl text-wrap markdown-body" v-html="msg.message">
           </div>
         </div>
       </div>
@@ -70,59 +70,46 @@ export default {
   setup() {
     // 데이터 정의
     const message = ref("");
+    const chatMessages = reactive([]);
     const channels = reactive([]);
     const rooms = reactive([]);
-    const selectedChannel = ref(0); // 현재 선택된 채널
-    const selectedRoom = ref(0); // 현재 선택된 채널
-    const chatMessages = reactive([]);
-    const startDate = ref(""); // 시작 날짜
-    const endDate = ref("");   // 종료 날짜
+    const selectedChannel = ref(0);
+    const selectedRoom = ref(0);
+    const startDate = ref("");
+    const endDate = ref("");
     const chatContainer = ref(null);
     const toc = ref("");
     const authStore = useAuthStore();
 
     // Markdown 객체 정의
-    const md = markdownIt({
-      html: true,
-    }).use(markdownItAnchor, { slugify: (s) => { return uslug(s) }, })
+    const md = markdownIt({ html: true })
+      .use(markdownItAnchor, { slugify: (s) => uslug(s) })
       .use(markdownItTocDoneRight, {
-        containerClass: 'toc', // TOC 컨테이너 클래스 설정
-        slugify: (s) => { return uslug(s) },
+        containerClass: 'toc',
+        slugify: (s) => uslug(s),
         callback: (html, ast) => {
           toc.value = generateToc(ast);
           toc.value = `<nav>${toc.value}</nav>`;
-        }
-      }).use(markdownItHighlightJS, {
-        hljs: hljs
-      });
+        },
+      })
+      .use(markdownItHighlightJS, { hljs });
 
     const generateToc = (node) => {
       let html = "";
-      // 현재 노드의 이름이 있는 경우 li 요소로 감싸기
       if (node.n) {
-        let padding = 'ps-3';
-        if (node.l === 1) {
-          padding = '';
-        }
+        const padding = node.l === 1 ? '' : 'ps-3';
         html += `<li class="text-sm text-slate-300 ${padding}"><a href="#${uslug(node.n)}">${node.n}`;
       }
-
-      // "c" 키가 배열이고, 배열에 요소가 있는 경우 ul로 감싸고 재귀 호출
       if (Array.isArray(node.c) && node.c.length > 0) {
         html += "<ul>";
         node.c.forEach(childNode => {
-          html += generateToc(childNode); // 하위 노드를 재귀적으로 처리
+          html += generateToc(childNode);
         });
         html += "</ul>";
       }
-
-      // 현재 노드가 li로 시작했다면 li를 닫기
-      if (node.n) {
-        html += "</a></li>";
-      }
-
+      if (node.n) html += "</a></li>";
       return html;
-    }
+    };
 
     // 메서드 정의
     const handleKeydown = (event) => {
@@ -133,190 +120,134 @@ export default {
     };
 
     const selectChannel = (index) => {
-      selectedChannel.value = index; // 선택된 채널 변경
+      selectedChannel.value = index;
     };
 
     const selectRoom = (index) => {
-      console.log(index);
-      selectedRoom.value = index; // 선택된 채널 변경
+      selectedRoom.value = index;
+      if (selectedRoom.value !== 0) {
+        getMessage();
+      }
+      else {
+        chatMessages.splice(0)
+      }
     };
 
     const addNewChannel = (title) => {
       channels.push({ title, messages: [] });
-      selectedChannel.value = channels.length - 1; // 새로 추가된 채널로 이동
+      selectedChannel.value = channels.length - 1;
     };
 
-    const addNewRoom = (title) => {
-      rooms.push({ title, messages: [] });
-      selectedRoom.value = rooms.length - 1; // 새로 추가된 채널로 이동
+    const addNewRoom = (lastRoomId, selectedChannel, newMessage) => {
+      rooms.splice(1, 0, {
+        id: lastRoomId,
+        channel_id: selectedChannel,
+        title: newMessage,
+      });
+      selectedRoom.value = lastRoomId;
     };
 
     const getLastRoomId = async () => {
       try {
-        // API 호출
         const response = await axios.get("http://localhost/api/chat/get-last-room-id", {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
+        return response.data.success ? response.data.lastRoomId : 0;
+      } catch (error) {
+        console.error("API 요청 중 에러 발생:", error);
+        return 0;
+      }
+    };
 
-        // API 호출 성공 시 데이터 처리
-        if (response.data.success) {
-          console.log("마지막 방 번호:", response.data.lastRoomId);
-          return response.data.lastRoomId; // 마지막 방 번호 반환
+    const getMessage = async () => {
+      try {
+        const response = await axios.post(
+          "http://localhost/api/chat/get-messages",
+          { user_id: authStore.user.id, room_id: selectedRoom.value },
+          { headers: { "Content-Type": "application/json" } }
+        );
+        if (response.data.status === "success") {
+          chatMessages.splice(0, chatMessages.length, ...response.data.messages);
         } else {
-          console.error("마지막 방 번호를 가져오는 데 실패했습니다:", response.data.message);
-          return 0; // 실패 시 기본값 0 반환
+          console.error("메시지 가져오기 실패:", response.data.message);
         }
       } catch (error) {
-        // 에러 처리
-        console.error("API 요청 중 에러 발생:", error);
-        return 0; // 실패 시 기본값 0 반환
+        console.error("메시지 가져오기 중 에러:", error);
       }
     };
-
-
-
 
     const sendMessage = async () => {
+      if (!message.value.trim()) return;
 
-      if (message.value.trim() !== "") {
-        const newMessage = { text: message.value, isMine: true };
+      const newMessage = {
+        message: message.value,
+        user_id: authStore.user.id,
+        isMine: true,
+      };
 
-        // 새로운 채팅일 경우 처리
-        if (selectedRoom.value == 0) {
-          console.log("Create New Room");
-
-          const lastRoomId = await getLastRoomId();
-          console.log(lastRoomId);
-
-          try {
-            const responseFromCreateRoom = await axios.post(
-              "http://localhost/api/chat/create-room",
-              {
-                user_id: authStore.user.id,
-                channel_id: selectedChannel.value,
-                title: newMessage.text
-              },
-              {
-                headers: { "Content-Type": "application/json" },
-              }
-            )
-            console.log("방 만들기 요청 결과 : " + responseFromCreateRoom);
-            rooms.splice(1, 0, {
-              id: lastRoomId + 1,
-              channel_id: selectedChannel.value,
-              title: newMessage.text
-            });
-            // selectedRoom.value = roomNumber
-
-          } catch (error) {
-            console.log(error);
-          }
-        }
-
-        // 로컬에 메시지 추가
-        chatMessages.push(newMessage);
-
-        // 스크롤 처리
-        scrollToBottom();
-
-        // 메시지 초기화
-        const messageToSend = message.value;
-        message.value = "";
-
+      if (selectedRoom.value === 0) {
+        const lastRoomId = await getLastRoomId();
         try {
-          // Laravel 서버로 메시지 전송
-          const responseFromLaravel = await axios.post(
-            "http://localhost/api/message/send-message",
-            {
-              user_id: authStore.user.id,
-              room_id: selectedRoom.value,
-              message: messageToSend,
-            },
-            {
-              headers: { "Content-Type": "application/json" },
-            }
+          await axios.post(
+            "http://localhost/api/chat/create-room",
+            { user_id: authStore.user.id, channel_id: selectedChannel.value, title: newMessage.message },
+            { headers: { "Content-Type": "application/json" } }
           );
-
-          const responseDataFromLaravel = responseFromLaravel.data;
-          console.log("Laravel 서버 응답:", responseDataFromLaravel);
-
-          /******************************* FLASK ********************************/
-          // const responseFromFlask = await axios.post(
-          //   "http://localhost:5001/py/api/send-message",
-          //   { message: messageToSend },
-          //   {
-          //     headers: {
-          //       "Content-Type": "application/json",
-          //     },
-          //     withCredentials: true,
-          //   }
-          // );
-
-          // const responseDataFromFlask = responseFromFlask.data;
-          // console.log("Flask 서버 응답:", responseDataFromFlask);
-
-          // chatMessages.push({
-          //   text: md.render(responseDataFromFlask.message),
-          //   isMine: false,
-          // });
-          /******************************* FLASK ********************************/
-
-          // 스크롤 처리
-          scrollToBottom();
+          addNewRoom(lastRoomId + 1, selectedChannel.value, newMessage.message);
         } catch (error) {
-          console.error("메시지 전송 중 에러 발생:", error);
+          console.error("방 생성 중 에러:", error);
         }
+      }
+
+      chatMessages.push(newMessage);
+      scrollToBottom();
+      const messageToSend = message.value;
+      message.value = "";
+
+      try {
+        await axios.post(
+          "http://localhost/api/chat/send-message",
+          { user_id: authStore.user.id, room_id: selectedRoom.value, message: messageToSend },
+          { headers: { "Content-Type": "application/json" } }
+        );
+        scrollToBottom();
+      } catch (error) {
+        console.error("메시지 전송 중 에러:", error);
       }
     };
 
-
-    // 스크롤 아래로
     const scrollToBottom = () => {
       nextTick(() => {
-        // if (chatContainer.value) {
-        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-        // }
+        if (chatContainer.value) {
+          chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+        }
       });
-    }
-
-    // 초기화 및 라이프사이클 훅
-    onMounted(() => {
-      console.log("컴포넌트가 마운트되었습니다.");
-      channels.push({ id: 1, title: '광양제철소', message: '' });
-      channels.push({ id: 2, title: '포항제철소', message: '' });
-      rooms.push({ id: 0, title: '새로운 메시지', message: '' });
-      getRooms()
-    });
+    };
 
     const getRooms = async () => {
       try {
-        // API 요청
         const response = await axios.post(
           "http://localhost/api/chat/get-rooms",
-          {
-            user_id: authStore.user.id,
-            channel_id: selectedChannel.value
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            }
-          }
+          { user_id: authStore.user.id, channel_id: selectedChannel.value },
+          { headers: { "Content-Type": "application/json" } }
         );
-
         if (response.data.success) {
-          // 방 리스트 갱신
           rooms.splice(1, rooms.length, ...response.data.rooms);
         } else {
-          console.error("방 리스트를 가져오는 데 실패했습니다:", response.data.message);
+          console.error("방 리스트 가져오기 실패:", response.data.message);
         }
       } catch (error) {
         console.error("API 요청 중 에러 발생:", error);
       }
     };
 
+    // 초기화
+    onMounted(() => {
+      channels.push({ id: 1, title: '광양제철소' });
+      channels.push({ id: 2, title: '포항제철소' });
+      rooms.push({ id: 0, title: '새로운 메시지' });
+      getRooms();
+    });
 
     return {
       message,
@@ -338,6 +269,7 @@ export default {
   },
 };
 </script>
+
 
 
 

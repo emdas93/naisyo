@@ -10,5 +10,11 @@ class ChatRoom extends Model
     use HasFactory;
 
     protected $table = 'chat_rooms'; // 테이블 이름 설정
+
+    protected $fillable = [
+        'title',
+        'user_id',
+        'channel_id',
+    ];
 }
 

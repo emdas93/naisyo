@@ -2,81 +2,29 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
+use App\Http\Controllers\Chat\RoomController;
 use App\Http\Controllers\Chat\MessageController;
+
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-// Route::post('/login', function (Request $request) {
-//     $credentials = $request->validate([
-//         'email' => 'required|email',
-//         'password' => 'required',
-//     ]);
-
-//     $user = User::where('email', $credentials['email'])->first();
-
-//     if (!$user || !Hash::check($credentials['password'], $user->password)) {
-//         return response()->json(['message' => 'Invalid credentials'], 401);
-//     }
-
-//     $token = $user->createToken('auth_token')->plainTextToken;
-
-//     return response()->json([
-//         'access_token' => $token,
-//         'token_type' => 'Bearer',
-//     ]);
-// });
 
 Route::get('/csrf-token', function () {
     return response()->json(['csrfToken' => csrf_token()]);
 });
 
-Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
+// User Login
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/user', [LoginController::class, 'user'])->middleware('auth:sanctum');
 
-    if (auth()->attempt($credentials)) {
-        return response()->json(['message' => 'Logged in successfully']);
-    }
-
-    return response()->json(['message' => 'Invalid credentials'], 401);
-});
-
-
+// Register
 Route::post('/register', [RegisterController::class, 'register']);
 
-Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
-    Auth::guard('web')->logout(); // 세션 로그아웃
-    request()->session()->invalidate(); // 세션 무효화
-    request()->session()->regenerateToken(); // CSRF 토큰 재생성
-
-    return response()->json(['message' => 'Logged out successfully']);
-});
-
-Route::get('/user', function () {
-    return response()->json(auth()->user());
-})->middleware('auth:sanctum');
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-
-// Get Channels
-Route::post('/channel/get-channels', [ChannelController::class, 'getChannels']);
-
-// Send Message
+// Message
 Route::post('/message/send-message', [MessageController::class, 'sendMessage']);
+
+// Room
+Route::post('/chat/get-rooms', [RoomController::class, 'getRooms']);
+Route::post('/chat/create-room', [RoomController::class, 'createRoom']);
+Route::get('/chat/get-last-room-id', [RoomController::class, 'getLastRoomId']);

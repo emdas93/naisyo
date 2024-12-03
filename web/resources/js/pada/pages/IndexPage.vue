@@ -148,24 +148,72 @@ export default {
 
     const addNewRoom = (title) => {
       rooms.push({ title, messages: [] });
-      selectedChannel.value = rooms.length - 1; // 새로 추가된 채널로 이동
+      selectedRoom.value = rooms.length - 1; // 새로 추가된 채널로 이동
     };
+
+    const getLastRoomId = async () => {
+      try {
+        // API 호출
+        const response = await axios.get("http://localhost/api/chat/get-last-room-id", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        // API 호출 성공 시 데이터 처리
+        if (response.data.success) {
+          console.log("마지막 방 번호:", response.data.lastRoomId);
+          return response.data.lastRoomId; // 마지막 방 번호 반환
+        } else {
+          console.error("마지막 방 번호를 가져오는 데 실패했습니다:", response.data.message);
+          return 0; // 실패 시 기본값 0 반환
+        }
+      } catch (error) {
+        // 에러 처리
+        console.error("API 요청 중 에러 발생:", error);
+        return 0; // 실패 시 기본값 0 반환
+      }
+    };
+
 
 
 
     const sendMessage = async () => {
 
-      // 새로운 채팅일 경우 처리
-      if(selectedRoom.value == 0) {
-        console.log("Create New Room");
-
-        rooms.splice(1, 0, {id:roomNumber, title: roomTitle})
-        selectedRoom.value = roomNumber
-      }
-
-
       if (message.value.trim() !== "") {
         const newMessage = { text: message.value, isMine: true };
+
+        // 새로운 채팅일 경우 처리
+        if (selectedRoom.value == 0) {
+          console.log("Create New Room");
+
+          const lastRoomId = await getLastRoomId();
+          console.log(lastRoomId);
+
+          try {
+            const responseFromCreateRoom = await axios.post(
+              "http://localhost/api/chat/create-room",
+              {
+                user_id: authStore.user.id,
+                channel_id: selectedChannel.value,
+                title: newMessage.text
+              },
+              {
+                headers: { "Content-Type": "application/json" },
+              }
+            )
+            console.log("방 만들기 요청 결과 : " + responseFromCreateRoom);
+            rooms.splice(1, 0, {
+              id: lastRoomId + 1,
+              channel_id: selectedChannel.value,
+              title: newMessage.text
+            });
+            // selectedRoom.value = roomNumber
+
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
         // 로컬에 메시지 추가
         chatMessages.push(newMessage);
@@ -182,9 +230,9 @@ export default {
           const responseFromLaravel = await axios.post(
             "http://localhost/api/message/send-message",
             {
-              message: messageToSend,
               user_id: authStore.user.id,
-
+              room_id: selectedRoom.value,
+              message: messageToSend,
             },
             {
               headers: { "Content-Type": "application/json" },
@@ -239,11 +287,36 @@ export default {
       channels.push({ id: 1, title: '광양제철소', message: '' });
       channels.push({ id: 2, title: '포항제철소', message: '' });
       rooms.push({ id: 0, title: '새로운 메시지', message: '' });
-      rooms.push({ id: 1, title: '도금부 실적 조회', message: '' });
-      rooms.push({ id: 2, title: 'STS제강 전기로 실적', message: '' });
-      rooms.push({ id: 4, title: 'TEST', message: '' });
-      rooms.splice(1, 0, {id:5, title: "TTESAF"})
+      getRooms()
     });
+
+    const getRooms = async () => {
+      try {
+        // API 요청
+        const response = await axios.post(
+          "http://localhost/api/chat/get-rooms",
+          {
+            user_id: authStore.user.id,
+            channel_id: selectedChannel.value
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        );
+
+        if (response.data.success) {
+          // 방 리스트 갱신
+          rooms.splice(1, rooms.length, ...response.data.rooms);
+        } else {
+          console.error("방 리스트를 가져오는 데 실패했습니다:", response.data.message);
+        }
+      } catch (error) {
+        console.error("API 요청 중 에러 발생:", error);
+      }
+    };
+
 
     return {
       message,

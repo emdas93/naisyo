@@ -60,7 +60,7 @@ export default {
     const submit = async () => {
       try {
         await authStore.login({ email: email.value, password: password.value });
-        alert("로그인 성공! 환영합니다.");
+        // alert("로그인 성공! 환영합니다.");
 
         // 이전 페이지로 리다이렉트
         const redirectPath = router.currentRoute.value.query.redirect || "/";

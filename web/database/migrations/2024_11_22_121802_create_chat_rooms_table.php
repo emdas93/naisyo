@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('chat_rooms', function (Blueprint $table) {
             $table->id();                                       // Primary Key, Auto Increment
             $table->unsignedBigInteger('user_id')->nullable();  // 방 주인 (NULL 허용)
+            $table->unsignedBigInteger('channel_id')->nullable();  // 방 주인 (NULL 허용)
             $table->string('title');                            // 방 이름
             $table->timestamps();                               // created_at, updated_at
 

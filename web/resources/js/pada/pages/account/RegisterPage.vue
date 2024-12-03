@@ -99,7 +99,7 @@ export default {
           password: this.password,
         });
 
-        alert("회원가입이 완료되었습니다!");
+        // alert("회원가입이 완료되었습니다!");
         console.log("Registration Response:", response.data);
 
         // 회원가입 후 로그인 페이지로 리다이렉트

@@ -1,35 +1,90 @@
-import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+from datetime import datetime  # 현재 시간을 가져오기 위한 모듈
+
+from openai import OpenAI
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("app_key")
-app.config['CORS_HEADERS'] = "Content-Type"
+
+# MySQL 데이터베이스 설정
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://wxhack:qweQWE12!@localhost/wxhack'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 성능 최적화를 위해 비활성화
+
+db = SQLAlchemy(app)
 
 # CORS 설정
-ALLOWED_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']
-CORS(app, resources={r"/py/api/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
+CORS(app, supports_credentials=True)
 
-@app.route('/py/api')
-def home():
+@app.route('/py/api/getTitle', methods=['POST'])
+def getTitle():
+    client = OpenAI()
+
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "입력 받은 프롬프트를 요약해서 15자 이내로(되도록이면) 제목을 만들어줘"},
+            {
+                "role": "user",
+                "content": request.json['message']
+            }
+        ]
+    )
+    
+    response_message = completion.choices[0].message.content
+    
     return jsonify({
-        "message": "Welcome to the Flask server!",
-        "status": "success"
+        "response": response_message
     })
 
-@app.route('/py/api/test', methods=['GET'])
-def test():
-    return jsonify({
-        "id": 1,
-        "name": "Sample Data",
-        "description": "This is test data for Flask API",
-        "status": "active"
-    })
-
-@app.route('/py/api/send-message', methods=['GET'])
+@app.route('/py/api/send-message', methods=['POST'])
 def sendMessage():
+    message = request.json['message']
+    roomId = request.json['room_id']
+    userId = 0  # 사용자의 ID (로그인 기능이 없을 경우 기본값 설정)
+
+    # OpenAI 클라이언트 초기화
+    client = OpenAI()
+
+    # 기존 대화 기록 불러오기
+    query = text("SELECT message FROM chat_messages WHERE room_id = :room_id ORDER BY created_at ASC")
+    past_messages = db.session.execute(query, {"room_id": roomId}).fetchall()
+
+    # 대화 기록을 GPT 형식으로 변환
+    messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    for past_message in past_messages:
+        messages.append({"role": "user", "content": past_message[0]})
+
+    # 현재 사용자의 메시지 추가
+    messages.append({"role": "user", "content": message})
+
+    # GPT 응답 생성
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages
+    )
+
+    response_message = completion.choices[0].message.content
+
+    # 현재 시간 가져오기
+    now = datetime.utcnow()
+
+    # 새 메시지와 GPT 응답을 DB에 저장
+    insert_query = text(
+        "INSERT INTO chat_messages (user_id, room_id, message, created_at, updated_at) VALUES (:user_id, :room_id, :message, :created_at, :updated_at)"
+    )
+    db.session.execute(insert_query, {
+        "user_id": 0,
+        "room_id": roomId,
+        "message": response_message,
+        "created_at": now,
+        "updated_at": now
+    })  # GPT 응답은 user_id를 0으로 저장
+    db.session.commit()
+
     return jsonify({
-        "message": "TEST"
+        'response': response_message
     })
 
 if __name__ == '__main__':

@@ -11,13 +11,15 @@
         </li>
       </ul>
       <h2 class="text-lg font-bold mb-4">Rooms</h2>
-      <ul class="space-y-2 mb-5">
-        <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(room.id)"
-          class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-100"
-          :class="{ 'bg-blue-100': selectedRoom === room.id }">
-          {{ room.title }}
-        </li>
-      </ul>
+      <div class="flex flex-col overflow-y-auto h-3/5">
+        <ul class="space-y-2 mb-5">
+          <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(room.id)"
+            class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-100"
+            :class="{ 'bg-blue-100': selectedRoom === room.id }">
+            {{ room.title }}
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- 중앙 컨텐츠 -->
@@ -121,6 +123,9 @@ export default {
 
     const selectChannel = (index) => {
       selectedChannel.value = index;
+      selectedRoom.value = 0;
+      getRooms();
+      chatMessages.splice(0);
     };
 
     const selectRoom = (index) => {
@@ -138,11 +143,11 @@ export default {
       selectedChannel.value = channels.length - 1;
     };
 
-    const addNewRoom = (lastRoomId, selectedChannel, newMessage) => {
+    const addNewRoom = (lastRoomId, selectedChannel, title) => {
       rooms.splice(1, 0, {
         id: lastRoomId,
         channel_id: selectedChannel,
-        title: newMessage,
+        title: title,
       });
       selectedRoom.value = lastRoomId;
     };
@@ -167,7 +172,11 @@ export default {
           { headers: { "Content-Type": "application/json" } }
         );
         if (response.data.status === "success") {
+          for(let i = 0 ; i < response.data.messages.length ; ++i) {
+            response.data.messages[i].message = md.render(response.data.messages[i].message);
+          }
           chatMessages.splice(0, chatMessages.length, ...response.data.messages);
+          scrollToBottom();
         } else {
           console.error("메시지 가져오기 실패:", response.data.message);
         }
@@ -185,15 +194,26 @@ export default {
         isMine: true,
       };
 
+      // 새로운 메시지에서 채팅을 보낼 경우 방 생성
       if (selectedRoom.value === 0) {
         const lastRoomId = await getLastRoomId();
+        let title = "";
         try {
-          await axios.post(
-            "http://localhost/api/chat/create-room",
-            { user_id: authStore.user.id, channel_id: selectedChannel.value, title: newMessage.message },
+
+          let getTitleResponse = await axios.post(
+            "http://localhost:5001/py/api/getTitle",
+            { message: newMessage.message },
             { headers: { "Content-Type": "application/json" } }
           );
-          addNewRoom(lastRoomId + 1, selectedChannel.value, newMessage.message);
+          let title = getTitleResponse.data.response;
+
+          await axios.post(
+            "http://localhost/api/chat/create-room",
+            { user_id: authStore.user.id, channel_id: selectedChannel.value, title: title },
+            { headers: { "Content-Type": "application/json" } }
+          );
+          addNewRoom(lastRoomId + 1, selectedChannel.value, title);
+
         } catch (error) {
           console.error("방 생성 중 에러:", error);
         }
@@ -204,12 +224,39 @@ export default {
       const messageToSend = message.value;
       message.value = "";
 
+      // PHP 프롬프트 전송
       try {
         await axios.post(
           "http://localhost/api/chat/send-message",
           { user_id: authStore.user.id, room_id: selectedRoom.value, message: messageToSend },
           { headers: { "Content-Type": "application/json" } }
         );
+        scrollToBottom();
+      } catch (error) {
+        console.error("메시지 전송 중 에러:", error);
+      }
+
+      // Python 프롬프트 전송
+      try {
+        await axios.post(
+          "http://localhost:5001/py/api/send-message",
+          {
+            channel_id: selectedChannel.value,
+            room_id: selectedRoom.value,
+            message: messageToSend
+          },
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true
+          }
+        ).then((res) => {
+          console.log(res.data.response);
+          const newMessage = {
+            message: res.data.response,
+            user_id: 0,
+          };
+          chatMessages.push(newMessage);
+        });
         scrollToBottom();
       } catch (error) {
         console.error("메시지 전송 중 에러:", error);

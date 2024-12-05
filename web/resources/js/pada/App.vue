@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 공통 AppBar -->
-    <div class="app-bar bg-blue-500 text-white shadow-md px-4 py-2 flex justify-between items-center">
+    <!-- <div class="app-bar bg-blue-500 text-white shadow-md px-4 py-2 flex justify-between items-center">
       <div class="text-xl font-semibold">PADA (Posco Automated Data Analysis) 🧐</div>
       <div class="flex space-x-4">
         <router-link to="/" class="hover:bg-blue-600 rounded px-3 py-1 transition">홈</router-link>
@@ -14,7 +14,7 @@
         <router-link v-if="isAuthenticated" to="/user-info"
           class="hover:bg-blue-600 rounded px-3 py-1 transition">유저정보</router-link>
       </div>
-    </div>
+    </div> -->
 
     <!-- 페이지 컨텐츠 -->
     <RouterView />

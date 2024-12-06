@@ -48,7 +48,7 @@
 
                 <!-- 입력 영역 -->
                 <div class="w-full md:w-3/4 bg-white flex flex-col sm:flex-row mt-4 pt-4">
-                    <textarea v-model="message" @keydown="handleKeydown" placeholder="메시지를 입력하세요"
+                    <textarea v-model="message" @keypress="handleKeydown" placeholder="메시지를 입력하세요"
                         class="border rounded-lg p-3 flex-grow resize-none h-16"></textarea>
                     <button @click="sendMessage"
                         class="bg-blue-500 text-white font-semibold rounded-lg shadow-md sm:ml-2 mt-2 sm:mt-0 px-6 py-3 w-full sm:w-auto hover:bg-blue-600">
@@ -252,7 +252,7 @@ export default {
                 console.error("메시지 전송 중 에러:", error);
             }
 
-            const response = await fetch("http://localhost:5001/py/api/send-message-stream", {
+            const response = await fetch("http://localhost:5001/py/api/send-stream", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -264,14 +264,18 @@ export default {
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let content = "";
-
+            let chatIndex = chatMessages.push({ message: content, user_id: 0 });
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                    chatMessages.at(chatIndex - 1).message = md.render(chatMessages.at(chatIndex - 1).message);
+                    break;
+                }
+                content = decoder.decode(value, { stream: true });
 
-                content += decoder.decode(value, { stream: true });
-                // content = await md.render(content);
-                chatMessages.push({ message: content, user_id: 0 });
+                chatMessages.at(chatIndex - 1).message += content;
+                console.log(chatMessages.at(chatIndex - 1).message)
+
                 scrollToBottom();
             }
         };
@@ -290,7 +294,6 @@ export default {
                 const lastRoomId = await getLastRoomId();
                 let title = "";
                 try {
-
                     let getTitleResponse = await axios.post(
                         "http://localhost:5001/py/api/get-title",
                         { message: newMessage.message },
@@ -435,35 +438,41 @@ export default {
 }
 
 .response {
-  font-family: "Courier New", Courier, monospace;
-  white-space: pre-wrap;
-  overflow: hidden; /* 타이핑 효과를 위해 내용이 잘리도록 설정 */
-  display: inline-block; /* 글자별 애니메이션 적용 가능 */
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+    overflow: hidden;
+    /* 타이핑 효과를 위해 내용이 잘리도록 설정 */
+    display: inline-block;
+    /* 글자별 애니메이션 적용 가능 */
 }
 
 @keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
 }
 
 @keyframes blink-caret {
-  from, to {
-    border-right-color: transparent;
-  }
-  50% {
-    border-right-color: black;
-  }
+
+    from,
+    to {
+        border-right-color: transparent;
+    }
+
+    50% {
+        border-right-color: black;
+    }
 }
 
 .typing-effect {
-  animation: typing 2s steps(30, end), blink-caret 0.5s step-end infinite;
-  border-right: 2px solid black;
-  white-space: nowrap; /* 텍스트를 한 줄로 유지 */
-  overflow: hidden;
+    animation: typing 2s steps(30, end), blink-caret 0.5s step-end infinite;
+    border-right: 2px solid black;
+    white-space: nowrap;
+    /* 텍스트를 한 줄로 유지 */
+    overflow: hidden;
 }
-
 </style>

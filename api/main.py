@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response, stream_with_context
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -17,7 +17,7 @@ db = SQLAlchemy(app)
 # CORS 설정
 CORS(app, supports_credentials=True)
 
-@app.route('/py/api/getTitle', methods=['POST'])
+@app.route('/py/api/get-title', methods=['POST'])
 def getTitle():
     client = OpenAI()
 
@@ -86,6 +86,44 @@ def sendMessage():
     return jsonify({
         'response': response_message
     })
+
+@app.route('/py/api/send-message-stream', methods=['POST'])
+def sendMessageStream():
+
+    message = request.json['message']
+    roomId = request.json['room_id']
+    
+    # OpenAI 클라이언트 초기화
+    client = OpenAI()
+
+    # 기존 대화 기록 불러오기
+    query = text("SELECT message FROM chat_messages WHERE room_id = :room_id ORDER BY created_at ASC")
+    past_messages = db.session.execute(query, {"room_id": roomId}).fetchall()
+
+    # 대화 기록을 GPT 형식으로 변환
+    messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    for past_message in past_messages:
+        messages.append({"role": "user", "content": past_message[0]})
+
+    # 현재 사용자의 메시지 추가
+    messages.append({"role": "user", "content": message})
+
+    # 스트리밍 응답을 처리하는 함수 정의
+    def generate():
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            stream=True  # 스트리밍 활성화
+        )
+
+        for chunk in completion:
+            if 'choices' in chunk and chunk['choices']:
+                content = chunk['choices'][0].get('delta', {}).get('content', '')
+                if content:
+                    yield content
+
+    return Response(stream_with_context(generate()), content_type='text/event-stream')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

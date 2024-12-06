@@ -9,6 +9,7 @@ import DashboardPage from "../pages/DashboardPage.vue";
 // Account
 import LoginPage from "../pages/account/LoginPage.vue";
 import RegisterPage from "../pages/account/RegisterPage.vue";
+import UserInfoPage from "../pages/account/UserInfoPage.vue";
 
 const routes = [
   // Index, Etc...
@@ -16,8 +17,9 @@ const routes = [
   { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true } },
 
   // Account
-  { path: '/login', name: 'login', component: LoginPage, meta: { requiresGuest: true } }, // 로그인한 사용자는 접근 불가
-  { path: '/register', name: 'register', component: RegisterPage, meta: { requiresGuest: true } }, // 로그인한 사용자는 접근 불가
+  { path: '/user/login', name: 'login', component: LoginPage, meta: { requiresGuest: true } },
+  { path: '/user/register', name: 'register', component: RegisterPage, meta: { requiresGuest: true } },
+  { path: '/user/info', name: 'register', component: UserInfoPage, meta: { requiresAuth: true } },
 ];
 
 const isClient = typeof window !== 'undefined';

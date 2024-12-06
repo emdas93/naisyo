@@ -1,4 +1,5 @@
 <template>
+  <AppHeader class="absolute w-full"/>
   <div class="flex flex-col justify-center items-center w-100 min-h-screen">
     <h3 class="font-bold text-3xl text-gray-500 mb-10">PADA LOGIN</h3>
     <div class="w-full max-w-xs mb-40">
@@ -46,9 +47,13 @@
 import { ref } from "vue";
 import { useAuthStore } from "../../store/auth";
 import { useRouter } from "vue-router";
+import AppHeader from "../../components/AppHeader.vue";
 
 export default {
   name: "LoginPage",
+  components: {
+    AppHeader
+  },
   setup() {
     const authStore = useAuthStore();
     const router = useRouter();

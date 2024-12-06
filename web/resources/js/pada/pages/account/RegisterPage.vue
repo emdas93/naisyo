@@ -1,4 +1,5 @@
 <template>
+  <AppHeader class="lg:absolute w-full" />
   <div class="flex flex-col justify-center items-center w-100 min-h-screen">
     <h3 class="font-bold text-3xl text-gray-500 mb-10">PADA REGISTER</h3>
     <form class="w-full max-w-lg" @submit.prevent="register">
@@ -7,13 +8,9 @@
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="name">
             이름
           </label>
-          <input
-            v-model="name"
+          <input v-model="name"
             class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="name"
-            type="text"
-            placeholder="John Doe"
-          />
+            id="name" type="text" placeholder="John Doe" />
           <p v-if="errors.name" class="text-red-500 text-xs italic">{{ errors.name }}</p>
         </div>
       </div>
@@ -22,26 +19,18 @@
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="email">
             이메일
           </label>
-          <input
-            v-model="email"
+          <input v-model="email"
             class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-          />
+            id="email" type="email" placeholder="you@example.com" />
           <p v-if="errors.email" class="text-red-500 text-xs italic">{{ errors.email }}</p>
         </div>
         <div class="w-full px-3">
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="email">
             직번
           </label>
-          <input
-            v-model="emp_no"
+          <input v-model="emp_no"
             class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="emp_no"
-            type="text"
-            placeholder="123456"
-          />
+            id="emp_no" type="text" placeholder="123456" />
           <p v-if="errors.emp_no" class="text-red-500 text-xs italic">{{ errors.emp_no }}</p>
         </div>
       </div>
@@ -50,21 +39,16 @@
           <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="password">
             비밀번호
           </label>
-          <input
-            v-model="password"
+          <input v-model="password"
             class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-            id="password"
-            type="password"
-            placeholder="******************"
-          />
+            id="password" type="password" placeholder="******************" />
           <p v-if="errors.password" class="text-red-500 text-xs italic">{{ errors.password }}</p>
         </div>
       </div>
       <div class="flex items-center justify-between">
         <button
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          type="submit"
-        >
+          type="submit">
           가입
         </button>
       </div>
@@ -77,8 +61,12 @@
 
 <script>
 import axios from "axios";
+import AppHeader from "../../components/AppHeader.vue";
 
 export default {
+  components:{
+    AppHeader
+  },
   data() {
     return {
       name: "",

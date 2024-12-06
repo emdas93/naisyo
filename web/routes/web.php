@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/{any?}', function () {
     return view('pada/index');
 });
+Route::get('/user/{any?}', function () {
+    return view('pada/index');
+});

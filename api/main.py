@@ -155,6 +155,8 @@ def sendStream():
 
     # 스트리밍 응답을 처리하는 함수 정의
     def generate():
+        full_response = ""
+        
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
@@ -163,50 +165,27 @@ def sendStream():
         for chunk in completion:
             content = chunk.choices[0].delta.content
             if content:
+                full_response += content
                 yield content
-            
-        # for chunk in completion:
-        #     if 'choices' in chunk and chunk['choices']:
-        #         content = chunk['choices'][0].get('delta', {}).get('content', '')
-        #         print("B")
-        #         if content:
-        #             yield content
 
+        # 현재 시간 가져오기
+        now = datetime.utcnow()
+
+        # 새 메시지와 GPT 응답을 DB에 저장
+        insert_query = text(
+            "INSERT INTO chat_messages (user_id, room_id, message, created_at, updated_at) VALUES (:user_id, :room_id, :message, :created_at, :updated_at)"
+        )
+        db.session.execute(insert_query, {
+            "user_id": 0,
+            "room_id": roomId,
+            "message": full_response,
+            "created_at": now,
+            "updated_at": now
+        })  # GPT 응답은 user_id를 0으로 저장
+        db.session.commit()
+        
     return Response(stream_with_context(generate()))
 
-    response_message = completion.choices[0].message.content
-
-    # 현재 시간 가져오기
-    now = datetime.utcnow()
-
-    # 새 메시지와 GPT 응답을 DB에 저장
-    insert_query = text(
-        "INSERT INTO chat_messages (user_id, room_id, message, created_at, updated_at) VALUES (:user_id, :room_id, :message, :created_at, :updated_at)"
-    )
-    db.session.execute(insert_query, {
-        "user_id": 0,
-        "room_id": roomId,
-        "message": response_message,
-        "created_at": now,
-        "updated_at": now
-    })  # GPT 응답은 user_id를 0으로 저장
-    db.session.commit()
-
-    return jsonify({
-        'response': response_message
-    })
-
-@app.route('/stream', methods=['POST'])
-def streamed_response():
-    def generate():
-        yield 'Hello '
-        yield 'My Name is'
-        yield 'chu '
-        yield 'seung '
-        yield 'hyeop '
-        yield '!'
-        yield '!'
-    return Response(stream_with_context(generate()))
 
 
 if __name__ == '__main__':

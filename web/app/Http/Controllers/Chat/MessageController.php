@@ -27,7 +27,6 @@ class MessageController extends Controller
     // 3. 응답 반환
     return response()->json([
       'status' => 'success',
-      // 'message' => 'Message sent successfully!',
       'message' => $message,
       'data' => $message,
     ], 201); // HTTP 201 Created
@@ -44,7 +43,8 @@ class MessageController extends Controller
     try {
       // 2. 메시지 조회
       $messages = ChatMessage::where('room_id', $validatedData['room_id'])
-        ->orderBy('created_at', 'asc') // 메시지 생성 날짜순으로 정렬
+        ->orderBy('created_at', 'desc') // 메시지 생성 날짜순으로 정렬
+        ->limit(300)
         ->get();
 
       // 3. 응답 반환

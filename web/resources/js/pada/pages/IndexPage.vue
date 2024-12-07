@@ -33,7 +33,7 @@
         </div>
         <!-- 채팅 메시지 영역 -->
         <div ref="chatContainer"
-          class="flex-grow w-full rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide"
+          class="flex-grow w-4/6 rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide"
           @scroll="handleScroll">
           <div v-for="(msg, index) in chatMessages" :key="index" class="flex"
             :class="{ 'justify-end': msg.user_id > 0, 'justify-start': msg.user_id == 0 }">

@@ -217,6 +217,13 @@ def sendStream():
                     arguments = parsed_arguments
                     print(arguments)
                     
+                    arguments = parsed_arguments
+                    requested_user_id = arguments.get("user_id")
+
+                    # 데이터베이스 쿼리 실행
+                    query = text("DESC")
+                    result = db.session.execute(query, {"user_id": requested_user_id}).fetchone()
+                    
                     # OpenAI API에 새 요청 보내기
                     follow_up_response = client.chat.completions.create(
                         model="gpt-4",

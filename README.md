@@ -281,3 +281,32 @@ EXPOSE 8083
 
 CMD [ "bash" ]
 ```
+
+## 테스트 데이터 생성
+
+``` sql
+CREATE TABLE wxhack.sales_data (
+    Sales_ID VARCHAR(10) NOT NULL,
+    Date DATE NOT NULL,
+    Product_ID VARCHAR(10) NOT NULL,
+    Product_Name VARCHAR(50) NOT NULL,
+    Category VARCHAR(50) NOT NULL,
+    Sub_Category VARCHAR(50) NOT NULL,
+    Region VARCHAR(20) NOT NULL,
+    Country VARCHAR(50) NOT NULL,
+    Sales_Rep VARCHAR(50) NOT NULL,
+    Customer_ID VARCHAR(10) NOT NULL,
+    Customer_Name VARCHAR(50) NOT NULL,
+    Customer_Segment VARCHAR(20) NOT NULL,
+    Quantity INT NOT NULL,
+    Unit_Price DECIMAL(10, 2) NOT NULL,
+    Discount DECIMAL(5, 2) NOT NULL,
+    Total_Price DECIMAL(10, 2) NOT NULL,
+    Order_Status VARCHAR(20) NOT NULL,
+    Payment_Method VARCHAR(20) NOT NULL,
+    Shipping_Method VARCHAR(20) NOT NULL,
+    Feedback_Score INT NOT NULL,
+    PRIMARY KEY (Sales_ID)
+);
+
+```

@@ -19,7 +19,7 @@ const routes = [
   // Account
   { path: '/user/login', name: 'login', component: LoginPage, meta: { requiresGuest: true } },
   { path: '/user/register', name: 'register', component: RegisterPage, meta: { requiresGuest: true } },
-  { path: '/user/info', name: 'register', component: UserInfoPage, meta: { requiresAuth: true } },
+  { path: '/user/info', name: 'info', component: UserInfoPage, meta: { requiresAuth: true } },
 ];
 
 const isClient = typeof window !== 'undefined';

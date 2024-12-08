@@ -33,7 +33,7 @@
         </div>
         <!-- 채팅 메시지 영역 -->
         <div ref="chatContainer"
-          class="flex-grow w-4/6 rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide"
+          class="flex-grow w-3/4 rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide"
           @scroll="handleScroll">
           <div v-for="(msg, index) in chatMessages" :key="index" class="flex"
             :class="{ 'justify-end': msg.user_id > 0, 'justify-start': msg.user_id == 0 }">
@@ -207,7 +207,6 @@ export default {
       const newMessage = {
         message: message.value,
         user_id: authStore.user.id,
-        isMine: true,
       };
 
       // 새로운 메시지에서 채팅을 보낼 경우 방 생성
@@ -256,6 +255,7 @@ export default {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          user_id: authStore.user.id,
           message: message.value,
           room_id: selectedRoom.value
         }),

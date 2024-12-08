@@ -11,7 +11,7 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     async fetchUser() {
       try {
-        const response = await axios.get("/api/user", { withCredentials: true });
+        const response = await axios.get("/api/account/get-user-info", { withCredentials: true });
         this.user = response.data; // 사용자 정보 저장
       } catch (error) {
         this.user = null; // 인증 실패 시 상태 초기화
@@ -25,11 +25,11 @@ export const useAuthStore = defineStore("auth", {
     },
     async login(credentials) {
       await axios.get("/sanctum/csrf-cookie"); // CSRF 초기화
-      const response = await axios.post("/api/login", credentials, { withCredentials: true });
+      const response = await axios.post("/api/account/login", credentials, { withCredentials: true });
       this.user = response.data.user; // 로그인 성공 시 사용자 정보 저장
     },
     async logout() {
-      await axios.post("/api/logout", {}, { withCredentials: true });
+      await axios.post("/api/account/logout", {}, { withCredentials: true });
       this.user = null; // 로그아웃 시 상태 초기화
     },
   },

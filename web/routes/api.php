@@ -8,15 +8,18 @@ use App\Http\Controllers\Chat\MessageController;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\UserController;
 
 Route::get('/csrf-token', function () {
     return response()->json(['csrfToken' => csrf_token()]);
 });
 
 // User Login
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
-Route::get('/user', [LoginController::class, 'user'])->middleware('auth:sanctum');
+Route::post('/account/login', [LoginController::class, 'login']);
+Route::post('/account/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/account/get-user-info', [UserController::class, 'getUserInfo'])->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->post('/account/set-instructions', [UserController::class, 'setInstructions']);
+
 
 // Register
 Route::post('/register', [RegisterController::class, 'register']);

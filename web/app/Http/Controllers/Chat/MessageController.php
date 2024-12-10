@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ChatMessage;
 
+use Illuminate\Support\Facades\Http;
+
 class MessageController extends Controller
 {
   public function sendMessage(Request $request)
@@ -17,19 +19,23 @@ class MessageController extends Controller
       'message' => 'required|string|max:1000', // 메시지 내용 제한
     ]);
 
-    // 2. 데이터 저장
-    $message = ChatMessage::create([
-      'user_id' => $validatedData['user_id'],
-      'room_id' => $validatedData['room_id'],
-      'message' => $request->message,
+    $responseFromPython = Http::post("http://localhost:5001/py/api/send-message", [
+      'message' => $validatedData['message'],
+      'room_id' => $validatedData['room_id']
     ]);
 
-    // 3. 응답 반환
-    return response()->json([
-      'status' => 'success',
-      'message' => $message,
-      'data' => $message,
-    ], 201); // HTTP 201 Created
+    if ($responseFromPython->successful()) {
+      // 2. 데이터 저장
+      $room = ChatMessage::create([
+        'user_id' => $validatedData['user_id'],
+        'message' => $request->message,
+      ]);
+
+      return response()->json([
+        'status' => 'success',
+        $responseFromPython->json()
+      ], 201);
+    }
   }
 
   public function getMessages(Request $request)

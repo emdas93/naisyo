@@ -4,22 +4,26 @@ import { useAuthStore } from '../store/auth';
 
 // Index, Etc...
 import IndexPage from "../pages/IndexPage.vue";
-import DashboardPage from "../pages/DashboardPage.vue";
 
 // Account
 import LoginPage from "../pages/account/LoginPage.vue";
 import RegisterPage from "../pages/account/RegisterPage.vue";
 import UserInfoPage from "../pages/account/UserInfoPage.vue";
 
+// Admin
+import AdminIndexPage from "../pages/admin/IndexPage.vue"
+
 const routes = [
   // Index, Etc...
   { path: '/', name: 'index', component: IndexPage, meta: { requiresAuth: true } },
-  { path: '/dashboard', name: 'dashboard', component: DashboardPage, meta: { requiresAuth: true } },
 
   // Account
   { path: '/user/login', name: 'login', component: LoginPage, meta: { requiresGuest: true } },
   { path: '/user/register', name: 'register', component: RegisterPage, meta: { requiresGuest: true } },
   { path: '/user/info', name: 'info', component: UserInfoPage, meta: { requiresAuth: true } },
+
+  // Admin
+  { path: '/admin/index', name: 'admin.index', component: AdminIndexPage, meta: { requiresAuth: true } },
 ];
 
 const isClient = typeof window !== 'undefined';

@@ -1,23 +1,23 @@
 <template>
   <div>
     <!-- 공통 AppBar -->
-    <div class="app-bar bg-blue-500 text-white shadow-md px-4 py-2 flex justify-between items-center">
+    <div class="text-black shadow-md px-4 py-2 flex justify-between items-center">
       <div class="text-xl font-semibold">PADA(Posco Automated Data Analysis) 🤔</div>
       <div class="flex space-x-4">
-        <router-link to="/" class="hover:bg-blue-600 rounded px-3 py-1 transition">홈</router-link>
-        <router-link v-if="!isAuthenticated" to="/user/login"
-          class="hover:bg-blue-600 rounded px-3 py-1 transition">로그인</router-link>
+        <router-link to="/" class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-house-fill"></i>
+          홈</router-link>
+        <router-link v-if="!isAuthenticated" to="/user/login" class="hover:bg-gray-300 rounded px-3 py-1 transition"><i
+            class="bi bi-key-fill"></i>
+          로그인</router-link>
         <router-link v-if="!isAuthenticated" to="/user/register"
-          class="hover:bg-blue-600 rounded px-3 py-1 transition">회원가입</router-link>
+          class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-person-plus-fill"></i>
+          회원가입</router-link>
         <button v-if="isAuthenticated" @click="showLogoutModal"
-          class="hover:bg-blue-600 rounded px-3 py-1 transition">로그아웃</button>
-        <router-link v-if="isAuthenticated" to="/user/info"
-          class="hover:bg-blue-600 rounded px-3 py-1 transition">유저정보</router-link>
+          class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-door-open-fill"></i> 로그아웃</button>
+        <router-link v-if="isAuthenticated" to="/user/info" class="hover:bg-gray-300 rounded px-3 py-1 transition"><i
+            class="bi bi-person-fill"></i>
+          유저정보</router-link>
       </div>
-    </div>
-
-    <div class="text-xl font-semibold">
-      <img src="../assets/images/logo.png" class="m-5 w-40" alt="">
     </div>
 
     <!-- 로그아웃 확인 모달 -->

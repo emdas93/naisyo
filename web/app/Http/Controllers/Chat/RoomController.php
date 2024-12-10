@@ -5,9 +5,37 @@ namespace App\Http\Controllers\Chat;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ChatRoom;
+use Illuminate\Support\Facades\Http;
 
 class RoomController extends Controller
 {
+  public function createRoom(Request $request)
+  {
+    // 1. 입력값 검증
+    $validatedData = $request->validate([
+      'user_id' => 'required',
+      'channel_id' => 'required',
+      'message' => 'required|string|max:5000', // 메시지 내용 제한
+    ]);
+
+    $responseFromPython = Http::post("http://localhost:5001/py/api/generate-title", [
+      'message' => $request->message,
+    ]);
+
+    // 2. 데이터 저장
+    $message = ChatRoom::create([
+      'user_id' => $validatedData['user_id'],
+      'channel_id' => $validatedData['channel_id'],
+      'title' => $responseFromPython->json()['response'],
+    ]);
+
+    return response()->json([
+      'status' => 'success',
+      'room_id' => $message->id,
+      'title' => $responseFromPython->json()['response']
+    ], 200);
+  }
+
   public function getRooms(Request $request)
   {
     // 요청 데이터 검증
@@ -36,46 +64,6 @@ class RoomController extends Controller
       return response()->json([
         'success' => false,
         'message' => '채팅방 조회 중 오류가 발생했습니다.',
-        'error' => $e->getMessage(),
-      ], 500);
-    }
-  }
-
-  public function createRoom(Request $request)
-  {
-    // 요청 데이터 검증
-    $validated = $request->validate([
-      'user_id' => 'required|integer',
-      'channel_id' => 'required|integer',
-      'title' => 'required|string|max:255', // 방 이름 필드 추가
-    ]);
-
-    $userId = $validated['user_id'];
-    $channelId = $validated['channel_id'];
-    $title = $validated['title'];
-
-    try {
-      // 새로운 채팅방 생성
-      $room = ChatRoom::create([
-        'title' => $title,
-        'user_id' => $userId,
-        'channel_id' => $channelId,
-      ]);
-
-      // 유저를 방에 추가 (Many-to-Many 관계)
-      // $room->users()->attach($userId);
-
-      // 성공적으로 생성된 방 반환
-      return response()->json([
-        'success' => true,
-        'message' => '채팅방이 성공적으로 생성되었습니다.',
-        'room' => $room,
-      ], 201);
-    } catch (\Exception $e) {
-      // 에러 처리
-      return response()->json([
-        'success' => false,
-        'message' => '채팅방 생성 중 오류가 발생했습니다.',
         'error' => $e->getMessage(),
       ], 500);
     }

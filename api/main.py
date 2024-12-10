@@ -27,7 +27,7 @@ def calculate_tokens(messages, model="gpt-4o-mini"):
         total_tokens += len(encoding.encode(message['content']))
     return total_tokens
 
-@app.route('/py/api/get-title', methods=['POST'])
+@app.route('/py/api/generate-title', methods=['POST'])
 def getTitle():
     client = OpenAI()
 
@@ -52,6 +52,7 @@ def getTitle():
 def sendMessage():
     message = request.json['message']
     roomId = request.json['room_id']
+    print(message)
     userId = 0  # 사용자의 ID (로그인 기능이 없을 경우 기본값 설정)
 
     # OpenAI 클라이언트 초기화
@@ -80,21 +81,8 @@ def sendMessage():
     # 현재 시간 가져오기
     now = datetime.utcnow()
 
-    # 새 메시지와 GPT 응답을 DB에 저장
-    insert_query = text(
-        "INSERT INTO chat_messages (user_id, room_id, message, created_at, updated_at) VALUES (:user_id, :room_id, :message, :created_at, :updated_at)"
-    )
-    db.session.execute(insert_query, {
-        "user_id": 0,
-        "room_id": roomId,
-        "message": response_message,
-        "created_at": now,
-        "updated_at": now
-    })  # GPT 응답은 user_id를 0으로 저장
-    db.session.commit()
-
     return jsonify({
-        'response': response_message
+        'message': response_message
     })
 
 @app.route('/py/api/send-stream', methods=['POST'])

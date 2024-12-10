@@ -1,7 +1,9 @@
 <template>
   <AppHeader class="lg:absolute w-full" />
   <div class="flex flex-col justify-center items-center w-100 min-h-screen">
-    <h3 class="font-bold text-3xl text-gray-500 mb-10">PADA REGISTER</h3>
+    <div class="text-xl font-semibold">
+      <img src="../../assets/images/logo.png" class="m-5 w-40" alt="">
+    </div>
     <form class="w-full max-w-lg" @submit.prevent="register">
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full px-3 mb-6">

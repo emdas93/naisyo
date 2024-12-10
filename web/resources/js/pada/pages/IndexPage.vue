@@ -1,10 +1,14 @@
 <template>
   <div class="flex flex-col lg:h-full">
     <AppHeader />
-    <div class="flex lg:flex-row flex-1">
+
+    <div class="flex lg:flex-row flex-1 mt-10">
       <!-- 왼쪽 메뉴 -->
+      <div class="flex flex-col items-center py-7 bg-blue-800 w-7 h-20 rounded-s-md ms-3 text-white">
+        <span class="-rotate-90 font-bold text-sm tracking-widest">MENU</span>
+      </div>
       <div
-        class="lg:w-1/6 w-full bg-gray-100 shadow-lg p-4 flex flex-col overflow-y-scroll border border-gray-200 rounded-lg">
+        class="lg:w-1/6 w-full mb-16 bg-gray-100 shadow-lg p-4 flex flex-col overflow-y-scroll scrollbar-hide border-2 border-blue-700 rounded-sm">
         <h2 class="text-lg font-bold mb-4">채널</h2>
         <ul class="space-y-2 mb-5">
           <li v-for="(channel, index) in channels" :key="index" @click="selectChannel(index)"
@@ -14,7 +18,7 @@
           </li>
         </ul>
         <h2 class="text-lg font-bold mb-4">대화</h2>
-        <div class="flex flex-col overflow-y-auto h-[580px] scrollbar-hide">
+        <div class="flex flex-col overflow-y-auto h-[500px] scrollbar-hide">
           <ul class="space-y-2">
             <li v-for="(room, index) in rooms" :key="index" @click="selectRoom(room.id)"
               class="text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-200"
@@ -27,13 +31,13 @@
 
       <!-- 중앙 컨텐츠 -->
       <div
-        class="lg:w-5/6 w-full bg-white shadow-md flex flex-col items-center justify-end relative bg-center bg-no-repeat ps-4">
+        class="lg:w-5/6 w-full bg-white flex flex-col items-center justify-end relative bg-center bg-no-repeat ps-4">
         <div class="absolute inset-0 flex items-center justify-center -z-10">
           <img src="../assets/images/posco.png" alt="POSCO" class="opacity-10">
         </div>
         <!-- 채팅 메시지 영역 -->
         <div ref="chatContainer"
-          class="flex-grow w-3/4 rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide"
+          class="flex-grow w-3/4 rounded-sm p-4 overflow-y-scroll space-y-4 bg-gray-50 border-2 border-blue-700 h-64 scrollbar-hide"
           @scroll="handleScroll">
           <div v-for="(msg, index) in chatMessages" :key="index" class="flex"
             :class="{ 'justify-end': msg.user_id > 0, 'justify-start': msg.user_id == 0 }">
@@ -47,10 +51,10 @@
         </div>
 
         <!-- 입력 영역 -->
-        <div class="w-full md:w-3/4 bg-white flex flex-col sm:flex-row mt-4 pt-4">
+        <div class="w-full md:w-3/4 bg-white flex flex-col sm:flex-row mt-4 pt-4 mb-16">
           <textarea v-model="message" @keypress="handleKeydown" placeholder="메시지를 입력하세요"
             class="border rounded-lg p-3 flex-grow resize-none h-16"></textarea>
-          <button @click="sendMessageStream"
+          <button @click="sendMessage"
             class="bg-blue-500 text-white font-semibold rounded-lg shadow-md sm:ml-2 mt-2 sm:mt-0 px-6 py-3 w-full sm:w-auto hover:bg-blue-600">
             전송
           </button>
@@ -134,7 +138,7 @@ export default {
     const handleKeydown = (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        sendMessageStream();
+        sendMessage();
       }
     };
 
@@ -160,13 +164,13 @@ export default {
       selectedChannel.value = channels.length;
     };
 
-    const addNewRoom = (lastRoomId, selectedChannel, title) => {
+    const addNewRoom = (room_id, selectedChannel, title) => {
       rooms.splice(1, 0, {
-        id: lastRoomId,
+        id: room_id,
         channel_id: selectedChannel,
         title: title,
       });
-      selectedRoom.value = lastRoomId;
+      selectedRoom.value = room_id;
     };
 
     const getLastRoomId = async () => {
@@ -201,113 +205,29 @@ export default {
         console.error("메시지 가져오기 중 에러:", error);
       }
     };
-    const sendMessageStream = async () => {
-      if (!message.value.trim()) return;
-
-      const newMessage = {
-        message: message.value,
-        user_id: authStore.user.id,
-      };
-
-      // 새로운 메시지에서 채팅을 보낼 경우 방 생성
-      if (selectedRoom.value === 0) {
-        const lastRoomId = await getLastRoomId();
-        let title = "";
-        try {
-
-          let getTitleResponse = await axios.post(
-            "http://localhost:5001/py/api/get-title",
-            { message: newMessage.message },
-            { headers: { "Content-Type": "application/json" } }
-          );
-          let title = getTitleResponse.data.response;
-
-          await axios.post(
-            "http://localhost/api/chat/create-room",
-            { user_id: authStore.user.id, channel_id: selectedChannel.value, title: title },
-            { headers: { "Content-Type": "application/json" } }
-          );
-          addNewRoom(lastRoomId + 1, selectedChannel.value, title);
-
-        } catch (error) {
-          console.error("방 생성 중 에러:", error);
-        }
-      }
-
-      chatMessages.push(newMessage);
-      scrollToBottom();
-      const messageToSend = message.value;
-      message.value = "";
-
-      // PHP 프롬프트 전송
-      try {
-        await axios.post(
-          "http://localhost/api/chat/send-message",
-          { user_id: authStore.user.id, room_id: selectedRoom.value, message: messageToSend },
-          { headers: { "Content-Type": "application/json" } }
-        );
-        scrollToBottom();
-      } catch (error) {
-        console.error("메시지 전송 중 에러:", error);
-      }
-
-      const response = await fetch("http://localhost:5001/py/api/send-stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: authStore.user.id,
-          message: message.value,
-          room_id: selectedRoom.value
-        }),
-      });
-
-      let content = "";
-      let tempContent = ""
-      let chatIndex = chatMessages.push({ message: content, user_id: 0 }) - 1;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-
-        content = decoder.decode(value, { stream: true });
-        tempContent += content;
-        chatMessages.at(chatIndex).message = md.render(tempContent);
-        scrollToBottom();
-      }
-    };
-
     const sendMessage = async () => {
       if (!message.value.trim()) return;
 
       const newMessage = {
         message: message.value,
         user_id: authStore.user.id,
-        isMine: true,
       };
 
       // 새로운 메시지에서 채팅을 보낼 경우 방 생성
       if (selectedRoom.value === 0) {
-        const lastRoomId = await getLastRoomId();
-        let title = "";
         try {
-          let getTitleResponse = await axios.post(
-            "http://localhost:5001/py/api/get-title",
-            { message: newMessage.message },
-            { headers: { "Content-Type": "application/json" } }
-          );
-          let title = getTitleResponse.data.response;
+          const getTitleResponse = await fetch("http://localhost/api/chat/create-room", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: authStore.user.id,
+              channel_id: selectedChannel.value,
+              message: newMessage.message,
+            })
+          });
+          const data = await getTitleResponse.json();
 
-          await axios.post(
-            "http://localhost/api/chat/create-room",
-            { user_id: authStore.user.id, channel_id: selectedChannel.value, title: title },
-            { headers: { "Content-Type": "application/json" } }
-          );
-          addNewRoom(lastRoomId + 1, selectedChannel.value, title);
+          addNewRoom(data.room_id, selectedChannel.value, data.title);
 
         } catch (error) {
           console.error("방 생성 중 에러:", error);
@@ -319,40 +239,39 @@ export default {
       const messageToSend = message.value;
       message.value = "";
 
-      // PHP 프롬프트 전송
+      // 프롬프트 전송
       try {
-        await axios.post(
-          "http://localhost/api/chat/send-message",
-          { user_id: authStore.user.id, room_id: selectedRoom.value, message: messageToSend },
-          { headers: { "Content-Type": "application/json" } }
-        );
-        scrollToBottom();
-      } catch (error) {
-        console.error("메시지 전송 중 에러:", error);
-      }
-
-      // Python 프롬프트 전송
-      try {
-        await axios.post(
-          "http://localhost:5001/py/api/send-message",
-          {
-            channel_id: selectedChannel.value,
-            room_id: selectedRoom.value,
-            message: messageToSend
-          },
-          {
-            headers: { "Content-Type": "application/json" },
-            withCredentials: true
-          }
-        ).then((res) => {
-          console.log(res.data.response);
-          const newMessage = {
-            message: res.data.response,
-            user_id: 0,
-          };
-          chatMessages.push(newMessage);
+        console.log(selectedRoom.value)
+        const response = await fetch("http://localhost/api/chat/send-message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: authStore.user.id,
+            message: messageToSend,
+            room_id: selectedRoom.value
+          }),
         });
-        scrollToBottom();
+
+        let content = "";
+        let tempContent = ""
+        let chatIndex = chatMessages.push({ message: "", user_id: 0 }) - 1;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          content = decoder.decode(value, { stream: true });
+          content = JSON.parse(content);
+          tempContent += content[0].message;
+          chatMessages.at(chatIndex).message = md.render(tempContent);
+          scrollToBottom();
+        }
+
       } catch (error) {
         console.error("메시지 전송 중 에러:", error);
       }
@@ -399,7 +318,6 @@ export default {
       chatContainer,
       handleKeydown,
       sendMessage,
-      sendMessageStream,
       channels,
       rooms,
       selectChannel,

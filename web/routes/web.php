@@ -19,3 +19,6 @@ Route::get('/{any?}', function () {
 Route::get('/user/{any?}', function () {
     return view('pada/index');
 });
+Route::get('/admin/{any?}', function () {
+    return view('pada/index');
+});

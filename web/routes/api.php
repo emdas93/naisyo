@@ -18,6 +18,7 @@ Route::get('/csrf-token', function () {
 Route::post('/account/login', [LoginController::class, 'login']);
 Route::post('/account/logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/account/get-user-info', [UserController::class, 'getUserInfo'])->middleware('auth:sanctum');
+Route::get('/account/get-user-list', [UserController::class, 'getUserList'])->middleware('auth:sanctum');
 Route::middleware('auth:sanctum')->post('/account/set-instructions', [UserController::class, 'setInstructions']);
 
 

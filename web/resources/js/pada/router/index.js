@@ -11,7 +11,9 @@ import RegisterPage from "../pages/account/RegisterPage.vue";
 import UserInfoPage from "../pages/account/UserInfoPage.vue";
 
 // Admin
-import AdminIndexPage from "../pages/admin/IndexPage.vue"
+import UserSearchPage from '../pages/admin/user/UserSearchPage.vue';
+import UserRegisterPage from '../pages/admin/user/UserRegisterPage.vue'
+import AdminLayout from '../pages/admin/AdminLayout.vue';
 
 const routes = [
   // Index, Etc...
@@ -23,7 +25,15 @@ const routes = [
   { path: '/user/info', name: 'info', component: UserInfoPage, meta: { requiresAuth: true } },
 
   // Admin
-  { path: '/admin/index', name: 'admin.index', component: AdminIndexPage, meta: { requiresAuth: true } },
+  {
+    path: '/admin',
+    component: AdminLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: 'user/search', name: 'admin.user.search', component: UserSearchPage, meta: { requiresAuth: true } },
+      { path: 'user/register', name: 'admin.user.register', component: UserRegisterPage, meta: { requiresAuth: true } },
+    ]
+  }
 ];
 
 const isClient = typeof window !== 'undefined';

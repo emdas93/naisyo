@@ -24,4 +24,14 @@ html, body, #app {
     width:100%;
     height:100%;
 }
+
+/* 기본적으로 스크롤바 숨김 */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+  /* Firefox */
+}
 </style>

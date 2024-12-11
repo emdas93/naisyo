@@ -13,10 +13,11 @@
           class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-person-plus-fill"></i>
           회원가입</router-link>
         <button v-if="isAuthenticated" @click="showLogoutModal"
-          class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-door-open-fill"></i> 로그아웃</button>
-        <router-link v-if="isAuthenticated" to="/user/info" class="hover:bg-gray-300 rounded px-3 py-1 transition"><i
-            class="bi bi-person-fill"></i>
-          유저정보</router-link>
+          class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-door-open-fill"></i>
+          로그아웃</button>
+        <router-link v-if="isAuthenticated" to="/admin/user/search"
+          class="hover:bg-gray-300 rounded px-3 py-1 transition"><i class="bi bi-person-fill"></i>
+          관리자페이지</router-link>
       </div>
     </div>
 

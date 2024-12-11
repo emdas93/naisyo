@@ -179,8 +179,9 @@ export default {
         })
       })
       const userList = await response.json();
-      for (let index in userList.data) {
-        users.push(userList.data[index]);
+      users.length = 0;
+      for (let index in userList) {
+        users.push(userList[index]);
       }
     }
 

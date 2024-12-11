@@ -78,12 +78,15 @@ class UserController extends Controller
 
     public function getUserList(Request $request)
     {
-        $user = User::get();
+        // 한 페이지에 표시할 데이터 개수 (기본값: 10)
+        $perPage = $request->input('per_page', 10);
 
-        return response()->json([
-            'data' => $user
-        ]);
+        // 페이지네이션 적용
+        $users = User::paginate($perPage);
+
+        return response()->json($users);
     }
+
 
     public function deleteUser(Request $request)
     {

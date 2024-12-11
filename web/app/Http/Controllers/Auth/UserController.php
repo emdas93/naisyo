@@ -16,6 +16,29 @@ class UserController extends Controller
         return response()->json(auth()->user());
     }
 
+    public function searchUserList(Request $request)
+    {
+        // 요청 데이터 검증
+        $validatedData = Validator::make($request->all(), [
+            'searchType' => 'numeric',
+            'searchText' => 'string',
+        ]);
+
+        $searchType = $request->searchType;
+        $searchText = $request['searchText'];
+
+        $user = new User();
+
+        if ($searchType == 1) {
+            $searchType = 'name';
+        } else if ($searchType == 2) {
+            $searchType = 'email';
+        }
+        $user = User::where($searchType, 'like', '%' . $searchText . '%')->get();
+
+        return response()->json($user);
+    }
+
     public function setInstructions(Request $request)
     {
         // 요청 데이터 검증
@@ -53,11 +76,32 @@ class UserController extends Controller
         }
     }
 
-    public function getUserList(Request $request) {
+    public function getUserList(Request $request)
+    {
         $user = User::get();
 
         return response()->json([
-            'data'=> $user
+            'data' => $user
         ]);
+    }
+
+    public function deleteUser(Request $request)
+    {
+        // 요청 데이터 검증
+        $validatedData = Validator::make($request->all(), [
+            'user_id' => 'require|numeric',
+        ]);
+
+        User::where('id', $request['user_id'])->delete();
+    }
+
+    public function deleteUsers(Request $request)
+    {
+        // 요청 데이터 검증
+        $validatedData = Validator::make($request->all(), [
+            'user_ids' => 'require',
+        ]);
+
+        User::where('id', $request['user_ids'])->delete();
     }
 }

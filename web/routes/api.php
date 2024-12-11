@@ -20,7 +20,9 @@ Route::post('/account/logout', [LoginController::class, 'logout'])->middleware('
 Route::get('/account/get-user-info', [UserController::class, 'getUserInfo'])->middleware('auth:sanctum');
 Route::get('/account/get-user-list', [UserController::class, 'getUserList'])->middleware('auth:sanctum');
 Route::middleware('auth:sanctum')->post('/account/set-instructions', [UserController::class, 'setInstructions']);
-
+Route::post('/account/search-user-list', [UserController::class, 'searchUserList'])->middleware('auth:sanctum');
+Route::post('/account/delete-user', [UserController::class, 'deleteUser'])->middleware('auth:sanctum');
+Route::post('/account/delete-users', [UserController::class, 'deleteUsers'])->middleware('auth:sanctum');
 
 // Register
 Route::post('/register', [RegisterController::class, 'register']);

@@ -6,7 +6,7 @@
       class="flex-grow w-full rounded-lg p-4 overflow-y-scroll space-y-4 bg-gray-50 border border-gray-200 h-64 scrollbar-hide">
       <div class="flex flex-row">
         <div class="inline-block relative w-auto me-3">
-          <select
+          <select v-model="searchType"
             class="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
             <option value="0">검색 조건</option>
             <option value="1">유저 이름</option>
@@ -19,14 +19,20 @@
           </div>
         </div>
         <div class="me-3">
-          <input
+          <input v-model="searchText"
             class="shadow appearance-none border rounded w-64 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             id="username" type="text" placeholder="Username">
         </div>
         <div class="">
-          <button
+          <button @click="searchUserList"
             class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
             <i class="bi bi-search"></i>
+          </button>
+        </div>
+        <div class="">
+          <button @click="deleteUsers"
+            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            선택 유저 삭제
           </button>
         </div>
       </div>
@@ -35,6 +41,9 @@
           <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100">
               <tr>
+                <th scope="col" class="px-6 py-3">
+                  선택
+                </th>
                 <th scope="col" class="px-6 py-3">
                   번호
                 </th>
@@ -61,6 +70,9 @@
             <tbody>
               <tr v-for="(user, index) in users" class="bg-white border-b hover:bg-gray-50">
                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap ">
+                  <input :value="index" v-model="selectedUserList" type="checkbox">
+                </td>
+                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap ">
                   {{ user.id }}
                 </td>
                 <td class="px-6 py-4">
@@ -82,7 +94,7 @@
                   <button class="text-blue-600 dark:text-blue-500 hover:underline">
                     수정
                   </button>
-                  <button class="text-red-600 dark:text-red-500 hover:underline ml-2">
+                  <button @click="showDialog(index)" class="text-red-600 dark:text-red-500 hover:underline ml-2">
                     삭제
                   </button>
                 </td>
@@ -93,17 +105,58 @@
       </div>
     </div>
   </div>
+  <CommonDialog ref="deleteDialog" :message="'유저를 삭제하시겠습니까?'" @confirm="deleteUser" />
 </template>
 
 <script>
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { useAuthStore } from "../../../store/auth";
+import CommonDialog from "../../../components/CommonDialog.vue";
 
 export default {
   name: "IndexPage",
-  components: {},
+  components: { CommonDialog },
   setup() {
     const users = reactive([]);
+    const searchType = ref(0);
+    const searchText = ref("");
+    const deleteDialog = ref(null);
+    const selectedUserList = ref([]);
+
+    const showDialog = (user_id) => {
+      deleteDialog.value.showModal(user_id);
+    }
+
+    const deleteUser = async (index) => {
+      const response = await fetch("http://localhost/api/account/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "user_id": users.at(index).id,
+        })
+      })
+
+      if (response) {
+        users.splice(index, 1)
+      }
+    }
+
+    const deleteUsers = async () => {
+      let deleteTargets = [];
+      for (let index in selectedUserList.value) {
+        deleteTargets.push(users[selectedUserList.value[index]].id);
+      }
+      console.log(deleteTargets);
+
+      const response = await fetch("http://localhost/api/account/delete-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "user_ids": deleteTargets,
+        })
+      })
+
+    }
 
     const getUserList = async () => {
       const response = await fetch("http://localhost/api/account/get-user-list")
@@ -111,7 +164,24 @@ export default {
       for (let index in userList.data) {
         users.push(userList.data[index]);
       }
+    }
 
+    const searchUserList = async () => {
+      if (searchText.value.trim() == "" || searchType.value == 0) {
+        return 0;
+      }
+      const response = await fetch("http://localhost/api/account/search-user-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "searchType": searchType.value,
+          "searchText": searchText.value
+        })
+      })
+      const userList = await response.json();
+      for (let index in userList.data) {
+        users.push(userList.data[index]);
+      }
     }
 
     const formatDate = (isoDate) => {
@@ -134,7 +204,15 @@ export default {
     return {
       users,
       getUserList,
-      formatDate
+      formatDate,
+      searchType,
+      searchText,
+      searchUserList,
+      showDialog,
+      deleteDialog,
+      deleteUser,
+      deleteUsers,
+      selectedUserList
     };
   },
 };
